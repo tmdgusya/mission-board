@@ -1,10 +1,15 @@
 import { Hono } from "hono";
 import {
   createApprovalRequestSchema,
+  approveRequestSchema,
+  denyRequestSchema,
+  approvalIdSchema,
 } from "../../schemas/approvals";
 import {
   createApprovalRequest,
   listApprovalRequests,
+  approveApprovalRequest,
+  denyApprovalRequest,
 } from "../../services/approvals";
 
 const approvalsRouter = new Hono();
@@ -80,6 +85,111 @@ approvalsRouter.get("/", async (c) => {
     return c.json(results);
   } catch (error) {
     console.error("Error fetching approval requests:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/approvals/:id/approve - Approve a pending approval request
+approvalsRouter.post("/:id/approve", async (c) => {
+  try {
+    // Validate approval ID parameter
+    const idParam = c.req.param("id");
+    const idValidation = approvalIdSchema.safeParse(idParam);
+    if (!idValidation.success) {
+      return c.json(
+        {
+          error: "Invalid approval ID format",
+          details: idValidation.error.issues,
+        },
+        400
+      );
+    }
+
+    const body = await c.req.json();
+
+    // Validate input
+    const validationResult = approveRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json(
+        {
+          error: "Validation failed",
+          details: validationResult.error.issues,
+        },
+        400
+      );
+    }
+
+    const { reviewedBy } = validationResult.data;
+
+    const result = await approveApprovalRequest({
+      approvalId: idValidation.data,
+      reviewedBy,
+    });
+
+    if (!result.success) {
+      const statusCode = result.statusCode as 400 | 404 | 409;
+      return c.json({ error: result.error }, statusCode);
+    }
+
+    return c.json(result.approval, 200);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    console.error("Error approving request:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/approvals/:id/deny - Deny a pending approval request
+approvalsRouter.post("/:id/deny", async (c) => {
+  try {
+    // Validate approval ID parameter
+    const idParam = c.req.param("id");
+    const idValidation = approvalIdSchema.safeParse(idParam);
+    if (!idValidation.success) {
+      return c.json(
+        {
+          error: "Invalid approval ID format",
+          details: idValidation.error.issues,
+        },
+        400
+      );
+    }
+
+    const body = await c.req.json();
+
+    // Validate input
+    const validationResult = denyRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json(
+        {
+          error: "Validation failed",
+          details: validationResult.error.issues,
+        },
+        400
+      );
+    }
+
+    const { reviewedBy, notes } = validationResult.data;
+
+    const result = await denyApprovalRequest({
+      approvalId: idValidation.data,
+      reviewedBy,
+      notes,
+    });
+
+    if (!result.success) {
+      const statusCode = result.statusCode as 400 | 404 | 409;
+      return c.json({ error: result.error }, statusCode);
+    }
+
+    return c.json(result.approval, 200);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    console.error("Error denying request:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

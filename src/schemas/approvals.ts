@@ -20,6 +20,19 @@ export const createApprovalRequestSchema = z.object({
 // Schema for approval ID parameter
 export const approvalIdSchema = z.string().regex(UUID_REGEX, "Invalid UUID format");
 
+// Schema for approving an approval request
+export const approveRequestSchema = z.object({
+  reviewedBy: z.string().regex(UUID_REGEX, "Invalid reviewer ID format"),
+});
+
+// Schema for denying an approval request
+export const denyRequestSchema = z.object({
+  reviewedBy: z.string().regex(UUID_REGEX, "Invalid reviewer ID format"),
+  notes: z.string().min(1, "Notes are required when denying an approval request"),
+});
+
 // Type exports
 export type CreateApprovalRequestInput = z.infer<typeof createApprovalRequestSchema>;
+export type ApproveRequestInput = z.infer<typeof approveRequestSchema>;
+export type DenyRequestInput = z.infer<typeof denyRequestSchema>;
 export type ApprovalStatus = (typeof APPROVAL_STATUSES)[number];

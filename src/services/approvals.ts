@@ -207,3 +207,283 @@ export async function listApprovalRequests(filters?: {
     createdAt: ar.createdAt,
   }));
 }
+
+/**
+ * Approves a pending approval request.
+ * Validates:
+ * - Approval request exists
+ * - Approval is still pending (not already approved/denied)
+ *
+ * On success, sets status='approved', reviewed_by, reviewed_at,
+ * transitions task status from 'review' to 'ready', and logs the action.
+ */
+export async function approveApprovalRequest(params: {
+  approvalId: string;
+  reviewedBy: string;
+}): Promise<{
+  success: true;
+  approval: {
+    id: string;
+    taskId: string;
+    agentId: string;
+    actionRequested: string;
+    status: string;
+    reviewedBy: string;
+    reviewedAt: Date;
+    notes: string | null;
+    createdAt: Date;
+  };
+} | {
+  success: false;
+  error: string;
+  statusCode: number;
+}> {
+  const { approvalId, reviewedBy } = params;
+
+  // Check if approval request exists
+  const approvalResult = await db
+    .select()
+    .from(approvalRequests)
+    .where(eq(approvalRequests.id, approvalId));
+
+  if (approvalResult.length === 0) {
+    return { success: false, error: "Approval request not found", statusCode: 404 };
+  }
+
+  const approval = approvalResult[0]!;
+
+  // Check if already processed
+  if (approval.status !== "pending") {
+    return {
+      success: false,
+      error: `Approval request has already been ${approval.status}`,
+      statusCode: 409,
+    };
+  }
+
+  // Auto-register reviewer if needed
+  const now = new Date();
+  const existingReviewer = await db.select().from(agents).where(eq(agents.id, reviewedBy));
+  if (existingReviewer.length === 0) {
+    try {
+      await db.insert(agents).values({
+        id: reviewedBy,
+        name: reviewedBy,
+        createdAt: now,
+        lastSeenAt: now,
+      });
+    } catch {
+      // Race condition - update last_seen instead
+      await db.update(agents).set({ lastSeenAt: now }).where(eq(agents.id, reviewedBy));
+    }
+  } else {
+    await db.update(agents).set({ lastSeenAt: now }).where(eq(agents.id, reviewedBy));
+  }
+
+  // Update the approval request
+  await db
+    .update(approvalRequests)
+    .set({
+      status: "approved",
+      reviewedBy,
+      reviewedAt: now,
+    })
+    .where(eq(approvalRequests.id, approvalId));
+
+  // Transition task status from 'review' to 'ready'
+  await db
+    .update(tasks)
+    .set({
+      status: "ready",
+      updatedAt: now,
+    })
+    .where(eq(tasks.id, approval.taskId));
+
+  // Log the status change
+  await db.insert(taskLogs).values({
+    id: crypto.randomUUID(),
+    taskId: approval.taskId,
+    agentId: approval.agentId,
+    action: "updated",
+    details: JSON.stringify({
+      field_changes: [
+        {
+          field: "status",
+          old_value: "review",
+          new_value: "ready",
+        },
+      ],
+    }),
+    createdAt: now,
+  });
+
+  // Log the approval action
+  await db.insert(taskLogs).values({
+    id: crypto.randomUUID(),
+    taskId: approval.taskId,
+    agentId: reviewedBy,
+    action: "created",
+    details: JSON.stringify({
+      approval_request_id: approvalId,
+      action: "approved",
+    }),
+    createdAt: now,
+  });
+
+  return {
+    success: true,
+    approval: {
+      id: approvalId,
+      taskId: approval.taskId,
+      agentId: approval.agentId,
+      actionRequested: approval.actionRequested,
+      status: "approved",
+      reviewedBy,
+      reviewedAt: now,
+      notes: approval.notes,
+      createdAt: approval.createdAt,
+    },
+  };
+}
+
+/**
+ * Denies a pending approval request.
+ * Validates:
+ * - Approval request exists
+ * - Approval is still pending (not already approved/denied)
+ * - Notes are provided (required for denial)
+ *
+ * On success, sets status='denied', reviewed_by, reviewed_at, notes,
+ * transitions task status from 'review' to 'blocked', and logs the action.
+ */
+export async function denyApprovalRequest(params: {
+  approvalId: string;
+  reviewedBy: string;
+  notes: string;
+}): Promise<{
+  success: true;
+  approval: {
+    id: string;
+    taskId: string;
+    agentId: string;
+    actionRequested: string;
+    status: string;
+    reviewedBy: string;
+    reviewedAt: Date;
+    notes: string;
+    createdAt: Date;
+  };
+} | {
+  success: false;
+  error: string;
+  statusCode: number;
+}> {
+  const { approvalId, reviewedBy, notes } = params;
+
+  // Check if approval request exists
+  const approvalResult = await db
+    .select()
+    .from(approvalRequests)
+    .where(eq(approvalRequests.id, approvalId));
+
+  if (approvalResult.length === 0) {
+    return { success: false, error: "Approval request not found", statusCode: 404 };
+  }
+
+  const approval = approvalResult[0]!;
+
+  // Check if already processed
+  if (approval.status !== "pending") {
+    return {
+      success: false,
+      error: `Approval request has already been ${approval.status}`,
+      statusCode: 409,
+    };
+  }
+
+  // Auto-register reviewer if needed
+  const now = new Date();
+  const existingReviewer = await db.select().from(agents).where(eq(agents.id, reviewedBy));
+  if (existingReviewer.length === 0) {
+    try {
+      await db.insert(agents).values({
+        id: reviewedBy,
+        name: reviewedBy,
+        createdAt: now,
+        lastSeenAt: now,
+      });
+    } catch {
+      // Race condition - update last_seen instead
+      await db.update(agents).set({ lastSeenAt: now }).where(eq(agents.id, reviewedBy));
+    }
+  } else {
+    await db.update(agents).set({ lastSeenAt: now }).where(eq(agents.id, reviewedBy));
+  }
+
+  // Update the approval request
+  await db
+    .update(approvalRequests)
+    .set({
+      status: "denied",
+      reviewedBy,
+      reviewedAt: now,
+      notes,
+    })
+    .where(eq(approvalRequests.id, approvalId));
+
+  // Transition task status from 'review' to 'blocked'
+  await db
+    .update(tasks)
+    .set({
+      status: "blocked",
+      updatedAt: now,
+    })
+    .where(eq(tasks.id, approval.taskId));
+
+  // Log the status change
+  await db.insert(taskLogs).values({
+    id: crypto.randomUUID(),
+    taskId: approval.taskId,
+    agentId: approval.agentId,
+    action: "updated",
+    details: JSON.stringify({
+      field_changes: [
+        {
+          field: "status",
+          old_value: "review",
+          new_value: "blocked",
+        },
+      ],
+    }),
+    createdAt: now,
+  });
+
+  // Log the denial action
+  await db.insert(taskLogs).values({
+    id: crypto.randomUUID(),
+    taskId: approval.taskId,
+    agentId: reviewedBy,
+    action: "created",
+    details: JSON.stringify({
+      approval_request_id: approvalId,
+      action: "denied",
+      notes,
+    }),
+    createdAt: now,
+  });
+
+  return {
+    success: true,
+    approval: {
+      id: approvalId,
+      taskId: approval.taskId,
+      agentId: approval.agentId,
+      actionRequested: approval.actionRequested,
+      status: "denied",
+      reviewedBy,
+      reviewedAt: now,
+      notes,
+      createdAt: approval.createdAt,
+    },
+  };
+}
