@@ -1,0 +1,101 @@
+{
+  "groupId": "board-layout-cards",
+  "testedAt": "2026-03-14T12:00:00.000Z",
+  "isolation": {
+    "agentBrowserSession": "4cad21f30b6b__board",
+    "dashboardUrl": "http://localhost:3201",
+    "apiUrl": "http://localhost:3200",
+    "readOnly": true
+  },
+  "toolsUsed": ["agent-browser"],
+  "assertions": [
+    {
+      "id": "VAL-DASH-001",
+      "title": "Initial page load",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to http://localhost:3201",
+          "expected": "Dashboard loads showing Kanban board",
+          "observed": "Page loaded successfully with title 'Mission Board', connected status shown"
+        },
+        {
+          "action": "Wait for network idle",
+          "expected": "All data loaded",
+          "observed": "Network settled, page fully rendered"
+        },
+        {
+          "action": "Check for all 6 status columns",
+          "expected": "Columns: backlog, ready, in_progress, review, done, blocked",
+          "observed": "All 6 columns present: Backlog (3), Ready (2), In Progress (2), Review (2), Done (1), Blocked (2)"
+        },
+        {
+          "action": "Check console errors",
+          "expected": "No errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/dashboard/board-layout-cards/VAL-DASH-001-full-page.png"
+        ],
+        "consoleErrors": "none",
+        "observations": "Dashboard loaded successfully at http://localhost:3201 showing a Kanban board with all 6 status columns (Backlog, Ready, In Progress, Review, Done, Blocked). Page title is 'Mission Board'. A 'Connected' status indicator was visible. Filters for project, status, agent, and a search box are present. No console errors detected."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DASH-002",
+      "title": "Task cards display",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Examine task cards in each column",
+          "expected": "Cards show title, status, agent name (or 'Unclaimed'), and task type",
+          "observed": "All cards display title, task type label (Feature/Bugfix/Implementation), and agent identifier (UUID or 'Unclaimed')"
+        },
+        {
+          "action": "Verify cards in Backlog column",
+          "expected": "Backlog tasks",
+          "observed": "3 cards: 'Backlog task one' (Feature, aaaaaaaa-...), 'Implement search feature' (Implementation, Unclaimed), 'Setup CI pipeline' (Implementation, b2c3d4e5-...)"
+        },
+        {
+          "action": "Verify cards in Ready column",
+          "expected": "Ready tasks",
+          "observed": "2 cards: 'Backlog task two' (Bugfix, aaaaaaaa-...), 'Design new homepage' (Implementation, a1b2c3d4-...)"
+        },
+        {
+          "action": "Verify cards in In Progress column",
+          "expected": "In-progress tasks",
+          "observed": "2 cards: 'In progress task' (Implementation, bbbbbbbb-...), 'Write API documentation' (Bugfix, b2c3d4e5-...)"
+        },
+        {
+          "action": "Verify cards in Review column",
+          "expected": "Review tasks",
+          "observed": "2 cards: 'Review task' (Feature, aaaaaaaa-...), 'Fix login bug' (Bugfix, a1b2c3d4-...)"
+        },
+        {
+          "action": "Verify cards in Done column",
+          "expected": "Done tasks",
+          "observed": "1 card: 'Done task' (Bugfix, cccccccc-...)"
+        },
+        {
+          "action": "Verify cards in Blocked column",
+          "expected": "Blocked tasks",
+          "observed": "2 cards: 'Blocked task' (Feature, bbbbbbbb-...), 'Refactor database layer' (Implementation, b2c3d4e5-...)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/dashboard/board-layout-cards/VAL-DASH-002-annotated-board.png"
+        ],
+        "consoleErrors": "none",
+        "observations": "All task cards display title, task type (Feature, Bugfix, or Implementation), and assigned agent (UUID or 'Unclaimed'). Cards are correctly placed in their respective status columns. The 6 seeded tasks are present in the correct columns. Additional tasks (beyond the original 6 seeded) were also visible, all correctly placed. The 'Unclaimed' label is shown for tasks without an assigned agent."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed. VAL-DASH-001 confirmed all 6 status columns (Backlog, Ready, In Progress, Review, Done, Blocked) are displayed on initial page load with no console errors. VAL-DASH-002 confirmed all task cards show title, task type, agent name (or 'Unclaimed'), and are correctly placed in their respective status columns."
+}

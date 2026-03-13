@@ -1,0 +1,68 @@
+{
+  "groupId": "real-time-updates",
+  "testedAt": "2026-03-14T02:03:55+09:00",
+  "isolation": {
+    "agentBrowserSession": "4cad21f30b6b__realtime",
+    "dashboardUrl": "http://localhost:3201",
+    "apiUrl": "http://localhost:3200",
+    "createdTaskTitle": "VAL-DASH-007 Realtime Test"
+  },
+  "toolsUsed": ["agent-browser", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-DASH-007",
+      "title": "Real-time updates",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open dashboard at http://localhost:3201",
+          "expected": "Kanban board with status columns displayed",
+          "observed": "Dashboard loaded successfully showing 6 status columns (Backlog, Ready, In Progress, Review, Done, Blocked) with existing task cards"
+        },
+        {
+          "action": "Take initial screenshot noting tasks in backlog column",
+          "expected": "Screenshot captured with current state",
+          "observed": "Backlog column contained: 'Restore task 1' (Implementation), 'Restore task 2' (Bugfix)"
+        },
+        {
+          "action": "Clear console errors before test",
+          "expected": "Console errors cleared",
+          "observed": "Errors cleared"
+        },
+        {
+          "action": "Create task via curl POST /api/tasks",
+          "expected": "Task created with 201/200 response",
+          "observed": "Task created successfully, response: {\"id\":\"12861d54-587e-4b86-9d53-e8184f4b99da\",\"title\":\"VAL-DASH-007 Realtime Test\",\"status\":\"backlog\",\"taskType\":\"feature\"}"
+        },
+        {
+          "action": "Wait 6 seconds for 5s polling interval to trigger",
+          "expected": "Dashboard polls for updated data",
+          "observed": "Waited 6 seconds from creation time"
+        },
+        {
+          "action": "Take after screenshot and snapshot",
+          "expected": "New task visible in backlog column",
+          "observed": "New task 'VAL-DASH-007 Realtime Test' (Feature, Unclaimed) now visible in backlog column as button ref=e12"
+        },
+        {
+          "action": "Check console errors",
+          "expected": "No errors",
+          "observed": "No console errors detected"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/dashboard/real-time-updates/VAL-DASH-007-before.png",
+          "evidence/dashboard/real-time-updates/VAL-DASH-007-after.png"
+        ],
+        "consoleErrors": [],
+        "network": "POST /api/tasks -> 200 (task created: 12861d54-587e-4b86-9d53-e8184f4b99da)",
+        "observations": "Task created via curl at ~2026-03-13T17:03:41.000Z. After waiting 6 seconds (past the 5s polling interval), the dashboard snapshot showed the new task 'VAL-DASH-007 Realtime Test' in the Backlog column. No manual page refresh was performed. The polling mechanism works as expected."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 1 assertion: VAL-DASH-007 passed. Task created via API appeared on the dashboard within the 5-second polling interval without manual refresh. No console errors were observed."
+}

@@ -104,6 +104,45 @@ Testing surface, validation approach, and resource constraints for the mission b
 - Project "another-project" (ID: varies per seed)
 - Agent ID in config: 00000001-0000-0000-0000-000000000001
 
+## Flow Validator Guidance: Dashboard
+
+### Isolation Rules
+- Dashboard tests MUST use separate browser sessions to avoid conflicts
+- Each validator gets its own agent-browser session (CDP port)
+- Do NOT create/delete tasks that other validators are testing — read-only for shared state
+- For assertions that create tasks (VAL-DASH-013), use unique task titles to avoid collisions
+- The real-time update test (VAL-DASH-007) creates tasks via curl — use a unique title prefix
+
+### Testing Approach
+- Use agent-browser for all dashboard UI validation
+- Navigate to http://localhost:3201
+- Take screenshots at each step for evidence
+- Check for console errors after each action
+- For drag-drop tests: use mouse drag actions and verify card moves
+
+### Dashboard URL
+- http://localhost:3201
+
+### Seeded Data (for dashboard milestone)
+- 2 Projects: "Alpha Project" (PROJ1), "Beta Project" (PROJ2)
+- 3 Agents: aaaaaaaa-aaaa-..., bbbbbbbb-bbbb-..., cccccccc-cccc-...
+- 6 Tasks across all statuses:
+  - 1 backlog task ("Backlog task one") in Alpha Project
+  - 1 ready task ("Backlog task two") in Alpha Project
+  - 1 in_progress task ("In progress task") claimed by AGENT2 in Alpha Project
+  - 1 review task ("Review task") claimed by AGENT1 in Beta Project
+  - 1 done task ("Done task") in Alpha Project
+  - 1 blocked task ("Blocked task") in Beta Project
+
+### API Field Naming Convention
+- API uses camelCase: agentId, projectId, taskType, createdAt, updatedAt
+- Task types: implementation, bugfix, feature, deployment, documentation, testing, research, other
+
+### Evidence Collection
+- Save screenshots for each assertion
+- Note any console errors
+- Record timing for real-time update assertions
+
 ---
 
 ## Testing Notes

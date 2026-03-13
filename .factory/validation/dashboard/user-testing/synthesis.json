@@ -1,0 +1,59 @@
+{
+  "milestone": "dashboard",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-DASH-001",
+    "VAL-DASH-002",
+    "VAL-DASH-003",
+    "VAL-DASH-004",
+    "VAL-DASH-005",
+    "VAL-DASH-006",
+    "VAL-DASH-007",
+    "VAL-DASH-008",
+    "VAL-DASH-009",
+    "VAL-DASH-010",
+    "VAL-DASH-011",
+    "VAL-DASH-012",
+    "VAL-DASH-013",
+    "VAL-DASH-014"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "flowReports": [
+    ".factory/validation/dashboard/user-testing/flows/read-filter-detail.json",
+    ".factory/validation/dashboard/user-testing/flows/states-responsive.json",
+    ".factory/validation/dashboard/user-testing/flows/drag-create-realtime.json"
+  ],
+  "evidenceDirs": [
+    "evidence/dashboard/read-filter-detail/",
+    "evidence/dashboard/states-responsive/",
+    "evidence/dashboard/drag-create-realtime/"
+  ],
+  "testGroups": [
+    {
+      "groupId": "read-filter-detail",
+      "assertions": ["VAL-DASH-001", "VAL-DASH-002", "VAL-DASH-004", "VAL-DASH-005", "VAL-DASH-006", "VAL-DASH-008", "VAL-DASH-010"],
+      "results": "7/7 passed"
+    },
+    {
+      "groupId": "states-responsive",
+      "assertions": ["VAL-DASH-009", "VAL-DASH-011", "VAL-DASH-012"],
+      "results": "3/3 passed"
+    },
+    {
+      "groupId": "drag-create-realtime",
+      "assertions": ["VAL-DASH-003", "VAL-DASH-007", "VAL-DASH-013", "VAL-DASH-014"],
+      "results": "4/4 passed"
+    }
+  ],
+  "previousRound": null,
+  "summary": "All 14 dashboard assertions passed across 3 parallel flow validator subagents. Kanban board loads with 6 columns, task cards display correctly, drag-drop works (valid and invalid transitions), filters (project/status/agent/search) function independently and together, task detail view shows comprehensive info, real-time polling picks up API changes within 5s, loading/empty/error states display appropriate UI, responsive design works on mobile, and task creation form works end-to-end."
+}

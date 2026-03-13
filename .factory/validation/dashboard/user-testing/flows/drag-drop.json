@@ -1,0 +1,120 @@
+{
+  "groupId": "drag-drop",
+  "testedAt": "2026-03-13T17:05:00.000Z",
+  "isolation": {
+    "session": "4cad21f30b6b__drag",
+    "dashboardUrl": "http://localhost:3201",
+    "apiUrl": "http://localhost:3200"
+  },
+  "toolsUsed": ["agent-browser", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-DASH-003",
+      "title": "Drag and drop task",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to http://localhost:3201",
+          "expected": "Kanban board loads with 6 status columns and task cards",
+          "observed": "Board loaded with Backlog(4), Ready(1), Review(1), Done(1) columns populated"
+        },
+        {
+          "action": "Use agent-browser drag command to drag 'Drag test - backlog task' from Backlog column to Ready column",
+          "expected": "Task card moves to Ready column and API call updates task status",
+          "observed": "Task moved from Backlog to Ready column in the UI. Success toast appeared briefly."
+        },
+        {
+          "action": "Verify task status via API: GET /api/tasks/47ea275e-2ea0-4259-8867-7e857489c6be",
+          "expected": "Task status is 'ready'",
+          "observed": "API confirmed status: ready"
+        },
+        {
+          "action": "Refresh page (navigate to http://localhost:3201 again)",
+          "expected": "Task is still in Ready column after refresh",
+          "observed": "Task 'Drag test - backlog task' confirmed in Ready column (ref=e14) in snapshot"
+        },
+        {
+          "action": "Check console errors",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/dashboard/drag-drop/initial-board.png",
+          "evidence/dashboard/drag-drop/VAL-DASH-003-task-moved-to-ready.png",
+          "evidence/dashboard/drag-drop/VAL-DASH-003-after-refresh.png"
+        ],
+        "consoleErrors": "none",
+        "network": "PATCH /api/tasks/47ea275e-2ea0-4259-8867-7e857489c6be with {status: 'ready'} -> 200 (inferred from UI behavior and API verification; network capture was not set up during this drag)",
+        "observations": "Drag-and-drop works using agent-browser's built-in drag command. The PointerSensor activation constraint (distance: 5px) requires proper drag gesture. The agent-browser drag command handles this correctly. Task status persisted via API call and survived page refresh. Success toast appeared confirming the move to 'Ready'."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DASH-014",
+      "title": "Invalid drag-drop handling",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Drag 'Restore task 2' from Backlog column to Done column using agent-browser drag command",
+          "expected": "Drop is prevented, error toast shown explaining valid transitions",
+          "observed": "Task remained in Backlog column. Red error toast appeared with message."
+        },
+        {
+          "action": "Capture error toast text via DOM evaluation",
+          "expected": "Toast explains invalid transition and lists valid moves",
+          "observed": "Toast text: 'Cannot move from \"Backlog\" to \"Done\". Valid moves: Ready, Blocked'"
+        },
+        {
+          "action": "Verify task status via API: GET /api/tasks/4ef7ba70-31da-4e71-9420-c1523ace1257",
+          "expected": "Task status is still 'backlog'",
+          "observed": "API confirmed status: backlog (unchanged)"
+        },
+        {
+          "action": "Check network requests for PATCH calls",
+          "expected": "No PATCH request made (client-side validation prevented API call)",
+          "observed": "Only GET requests (polling) found - no PATCH requests for invalid drag"
+        },
+        {
+          "action": "Check console errors",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/dashboard/drag-drop/VAL-DASH-014-invalid-drag-backlog-to-done.png",
+          "evidence/dashboard/drag-drop/VAL-DASH-014-invalid-drag-with-toast.png",
+          "evidence/dashboard/drag-drop/VAL-DASH-014-error-toast-captured.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No PATCH requests made during invalid drag - only GET polling requests. Client-side validation in isValidStatusTransition() prevented the API call entirely.",
+        "observations": "Invalid drag (backlog -> done) is properly prevented client-side. The KanbanBoard.handleDragEnd function checks isValidStatusTransition() and calls addToast() with getInvalidTransitionMessage() which returns: 'Cannot move from \"Backlog\" to \"Done\". Valid moves: Ready, Blocked'. The toast is red (error type), appears at top-right, has a dismiss button (×), and auto-dismisses after 4 seconds. No visual column highlight for invalid drops - the column border highlight (isOver state) is dnd-kit's native behavior but the validation happens in onDragEnd, not during drag-over."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Initial mouse-based drag (mouse move/down/move/up) did not trigger dnd-kit's PointerSensor. The PointerSensor requires a 5px activation distance before recognizing the drag. agent-browser's built-in 'drag @e11 @e13' command handles this correctly by performing a proper drag gesture.",
+      "resolved": true,
+      "resolution": "Used agent-browser's built-in drag command (drag @source @target) instead of manual mouse operations. This works reliably with dnd-kit.",
+      "affectedAssertions": ["VAL-DASH-003", "VAL-DASH-014"]
+    },
+    {
+      "description": "Toast messages auto-dismiss after 4 seconds, making it difficult to capture them in screenshots if there's a delay. Had to chain the drag command and screenshot/eval immediately to capture the toast.",
+      "resolved": true,
+      "resolution": "Chained drag command with eval/screenshot in the same shell invocation to capture toast before 4-second auto-dismiss timeout.",
+      "affectedAssertions": ["VAL-DASH-014"]
+    },
+    {
+      "description": "Seeded data was mostly deleted by other parallel validators. Had to create test tasks via API (POST /api/tasks) and set up their statuses through valid transitions before testing.",
+      "resolved": true,
+      "resolution": "Created tasks with unique prefix 'Drag test -' and moved them through valid status transitions (backlog->ready->in_progress->review->done) via PATCH API to set up test data.",
+      "affectedAssertions": ["VAL-DASH-003", "VAL-DASH-014"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: both PASSED. VAL-DASH-003: Drag-and-drop successfully moves tasks between columns, updates status via API, and change persists after refresh. VAL-DASH-014: Invalid drag (backlog->done) is properly prevented with clear error toast listing valid transitions, no API call made."
+}
