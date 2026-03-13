@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useTasks } from "../hooks/use-tasks";
+import { useApprovals } from "../hooks/use-approvals";
 import { KanbanBoard } from "./KanbanBoard";
 import {
   Filters,
@@ -10,8 +11,12 @@ import {
 } from "./Filters";
 import { TaskDetail } from "./TaskDetail";
 import { CreateTaskForm } from "./CreateTaskForm";
+import { ApprovalQueue } from "./ApprovalQueue";
+
+type View = "board" | "approvals";
 
 export function DashboardContent(): React.ReactElement {
+  const [currentView, setCurrentView] = useState<View>("board");
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
@@ -23,6 +28,10 @@ export function DashboardContent(): React.ReactElement {
     error: tasksError,
     refetch: refetchTasks,
   } = useTasks(apiParams);
+
+  // Fetch pending approvals count for the badge
+  const { data: pendingApprovals = [] } = useApprovals({ status: "pending" });
+  const pendingCount = pendingApprovals.length;
 
   const filteredTasks = useMemo(
     () => applyClientFilters(tasks, filters),
@@ -58,16 +67,28 @@ export function DashboardContent(): React.ReactElement {
     setFilters(DEFAULT_FILTERS);
   }, []);
 
+  const handleNavigateToApprovals = useCallback(() => {
+    setCurrentView("approvals");
+  }, []);
+
+  const handleBackToBoard = useCallback(() => {
+    setCurrentView("board");
+  }, []);
+
+  // Show approval queue view
+  if (currentView === "approvals") {
+    return <ApprovalQueue onBack={handleBackToBoard} />;
+  }
+
   return (
     <div
       style={{
         padding: "24px",
         maxWidth: "100%",
-        // Responsive: use CSS media query approach via style override
       }}
       className="dashboard-container"
     >
-      {/* Header with New Task button */}
+      {/* Header with New Task button and Approval Queue link */}
       <div
         style={{
           display: "flex",
@@ -86,31 +107,72 @@ export function DashboardContent(): React.ReactElement {
         >
           Mission Board
         </h1>
-        <button
-          data-testid="new-task-button"
-          onClick={handleOpenCreateForm}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 500,
-            cursor: "pointer",
-            border: "1px solid transparent",
-            backgroundColor: "#22c55e",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#16a34a";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#22c55e";
-          }}
-        >
-          + New Task
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            data-testid="approval-queue-nav-button"
+            onClick={handleNavigateToApprovals}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              border: "1px solid #f59e0b44",
+              backgroundColor: pendingCount > 0 ? "#f59e0b22" : "#1e293b",
+              color: pendingCount > 0 ? "#f59e0b" : "#94a3b8",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = pendingCount > 0 ? "#f59e0b33" : "#334155";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = pendingCount > 0 ? "#f59e0b22" : "#1e293b";
+            }}
+          >
+            🔔 Approvals
+            {pendingCount > 0 && (
+              <span
+                style={{
+                  backgroundColor: "#f59e0b",
+                  color: "#000",
+                  padding: "1px 6px",
+                  borderRadius: "10px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                }}
+              >
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            data-testid="new-task-button"
+            onClick={handleOpenCreateForm}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              border: "1px solid transparent",
+              backgroundColor: "#22c55e",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#16a34a";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#22c55e";
+            }}
+          >
+            + New Task
+          </button>
+        </div>
       </div>
 
       <Filters

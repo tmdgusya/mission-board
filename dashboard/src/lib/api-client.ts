@@ -143,6 +143,38 @@ export class ApiClient {
     );
   }
 
+  // Approvals
+  async listApprovals(params?: ApprovalQueryParams): Promise<ApprovalRequest[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.task_id) searchParams.set("task_id", params.task_id);
+    if (params?.status) searchParams.set("status", params.status);
+    const query = searchParams.toString();
+    return this.request<ApprovalRequest[]>(
+      `/api/approvals${query ? `?${query}` : ""}`
+    );
+  }
+
+  async approveRequest(
+    id: string,
+    reviewedBy: string
+  ): Promise<ApprovalRequest> {
+    return this.request<ApprovalRequest>(`/api/approvals/${id}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ reviewedBy }),
+    });
+  }
+
+  async denyRequest(
+    id: string,
+    reviewedBy: string,
+    notes: string
+  ): Promise<ApprovalRequest> {
+    return this.request<ApprovalRequest>(`/api/approvals/${id}/deny`, {
+      method: "POST",
+      body: JSON.stringify({ reviewedBy, notes }),
+    });
+  }
+
   // Health
   async healthCheck(): Promise<{ status: string }> {
     return this.request<{ status: string }>("/api/health");
@@ -220,4 +252,21 @@ export interface LogQueryParams {
   agent_id?: string;
   project_id?: string;
   action?: string;
+}
+
+export interface ApprovalRequest {
+  id: string;
+  taskId: string;
+  agentId: string;
+  actionRequested: string;
+  status: "pending" | "approved" | "denied";
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface ApprovalQueryParams {
+  task_id?: string;
+  status?: string;
 }
