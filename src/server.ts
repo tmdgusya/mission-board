@@ -4,6 +4,7 @@ import { projectsRouter } from "./api/routes/projects";
 import { tasksRouter } from "./api/routes/tasks";
 import { agentsRouter } from "./api/routes/agents";
 import { logsRouter } from "./api/routes/logs";
+import { approvalsRouter } from "./api/routes/approvals";
 
 const app = new Hono();
 
@@ -32,6 +33,9 @@ app.route("/api/agents", agentsRouter);
 
 // Mount logs routes
 app.route("/api/logs", logsRouter);
+
+// Mount approval routes
+app.route("/api/approvals", approvalsRouter);
 
 // Global error handler
 app.onError((err, c) => {
