@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   tasks: Task[];
   activeTaskId: string | null;
   onTaskClick?: (taskId: string) => void;
+  isMobile?: boolean;
 }
 
 export function KanbanColumn({
@@ -16,6 +17,7 @@ export function KanbanColumn({
   tasks,
   activeTaskId,
   onTaskClick,
+  isMobile = false,
 }: KanbanColumnProps): React.ReactElement {
   const { isOver, setNodeRef } = useDroppable({
     id: `column-${status}`,
@@ -25,9 +27,9 @@ export function KanbanColumn({
   const columnStyle: React.CSSProperties = {
     backgroundColor: isOver ? "#1a2332" : "#0f172a",
     borderRadius: "8px",
-    padding: "16px",
-    minWidth: "280px",
-    flex: 1,
+    padding: isMobile ? "12px" : "16px",
+    minWidth: isMobile ? "auto" : "280px",
+    flex: isMobile ? undefined : 1,
     border: `1px solid ${isOver ? STATUS_COLORS[status] : "#1e293b"}`,
     transition: "border-color 0.2s, background-color 0.2s",
   };

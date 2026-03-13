@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -21,6 +21,7 @@ import { useUpdateTask, useHandleApiError } from "../hooks/use-update-task";
 import { KanbanColumn } from "./KanbanColumn";
 import { TaskCard } from "./TaskCard";
 import { Toast, useToast } from "./Toast";
+import { LoadingState, ErrorState, EmptyState } from "./BoardStates";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -28,6 +29,8 @@ interface KanbanBoardProps {
   error: Error | null;
   onRetry: () => void;
   onTaskClick?: (taskId: string) => void;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
 export function KanbanBoard({
@@ -36,13 +39,27 @@ export function KanbanBoard({
   error: tasksError,
   onRetry: refetchTasks,
   onTaskClick,
+  hasActiveFilters = false,
+  onClearFilters,
 }: KanbanBoardProps): React.ReactElement {
-  const { data: healthData, error: healthError, refetch: refetchHealth } = useApiHealth();
+  const { data: healthData, error: healthError, refetch: refetchHealth, isFetching: isHealthFetching } = useApiHealth();
   const updateTask = useUpdateTask();
   const handleApiError = useHandleApiError();
   const { messages, addToast, dismissToast } = useToast();
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Responsive detection
+  useEffect(() => {
+    const checkMobile = (): void => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -110,73 +127,36 @@ export function KanbanBoard({
   }, []);
 
   const handleRetry = useCallback(() => {
-    refetchHealth();
-    refetchTasks();
+    setIsRetrying(true);
+    Promise.all([refetchHealth(), refetchTasks()])
+      .finally(() => setIsRetrying(false));
   }, [refetchHealth, refetchTasks]);
 
   // Error state
   if (healthError || tasksError) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px",
-          gap: "16px",
-        }}
-        data-testid="error-state"
-      >
-        <div style={{ color: "#ef4444", fontSize: "18px", fontWeight: "bold" }}>
-          Connection Error
-        </div>
-        <div style={{ color: "#94a3b8", textAlign: "center" }}>
-          Unable to connect to the API server. Make sure it&apos;s running on port 3200.
-        </div>
-        <button
-          onClick={handleRetry}
-          style={{
-            padding: "8px 24px",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "14px",
-          }}
-          data-testid="retry-button"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorState
+        onRetry={handleRetry}
+        isRetrying={isRetrying}
+        details={healthError
+          ? "Unable to connect to the API server. Make sure it's running on port 3200."
+          : "Failed to load tasks. Please check your connection and try again."}
+      />
     );
   }
 
   // Loading state
   if (isLoading) {
+    return <LoadingState />;
+  }
+
+  // Empty state
+  if (tasks.length === 0) {
     return (
-      <div
-        data-testid="loading-state"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "40px",
-        }}
-      >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: "3px solid #334155",
-            borderTopColor: "#3b82f6",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+      <EmptyState
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={onClearFilters}
+      />
     );
   }
 
@@ -192,11 +172,15 @@ export function KanbanBoard({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "24px",
+          marginBottom: isMobile ? "16px" : "24px",
         }}
       >
         <h1
-          style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9" }}
+          style={{
+            fontSize: isMobile ? "20px" : "24px",
+            fontWeight: 700,
+            color: "#f1f5f9",
+          }}
           data-testid="board-title"
         >
           Mission Board
@@ -223,9 +207,10 @@ export function KanbanBoard({
         <div
           data-testid="kanban-board"
           style={{
-            display: "flex",
-            gap: "16px",
-            overflowX: "auto",
+            display: isMobile ? "flex" : "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: isMobile ? "12px" : "16px",
+            overflowX: isMobile ? "visible" : "auto",
             paddingBottom: "16px",
             minHeight: "400px",
           }}
@@ -237,6 +222,7 @@ export function KanbanBoard({
               tasks={tasksByStatus.get(status) ?? []}
               activeTaskId={activeTask?.id ?? null}
               onTaskClick={onTaskClick}
+              isMobile={isMobile}
             />
           ))}
         </div>

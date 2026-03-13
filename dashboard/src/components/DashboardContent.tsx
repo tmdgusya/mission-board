@@ -35,8 +35,28 @@ export function DashboardContent(): React.ReactElement {
     setSelectedTaskId(null);
   }, []);
 
+  const hasActiveFilters = useMemo(
+    () =>
+      filters.projectId !== "" ||
+      filters.status !== "" ||
+      filters.agentId !== "" ||
+      filters.search !== "",
+    [filters]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+  }, []);
+
   return (
-    <div style={{ padding: "24px", maxWidth: "100%" }}>
+    <div
+      style={{
+        padding: "24px",
+        maxWidth: "100%",
+        // Responsive: use CSS media query approach via style override
+      }}
+      className="dashboard-container"
+    >
       <Filters
         filters={filters}
         onFiltersChange={setFilters}
@@ -48,6 +68,8 @@ export function DashboardContent(): React.ReactElement {
         error={tasksError}
         onRetry={refetchTasks}
         onTaskClick={handleTaskClick}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={handleClearFilters}
       />
       <TaskDetail taskId={selectedTaskId} onClose={handleCloseDetail} />
     </div>
