@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3200";
+  (typeof process !== "undefined" && process.env?.VITE_API_URL) || "http://localhost:3200";
 
 export class ApiClient {
   private baseUrl: string;
@@ -77,11 +77,11 @@ export class ApiClient {
 
   async createTask(data: {
     title: string;
-    project_id: string;
-    agent_id?: string;
+    projectId: string;
+    agentId?: string;
     description?: string;
-    task_type?: string;
-    requires_approval?: boolean;
+    taskType?: string;
+    requiresApproval?: boolean;
   }): Promise<Task> {
     return this.request<Task>("/api/tasks", {
       method: "POST",
@@ -111,7 +111,7 @@ export class ApiClient {
   ): Promise<Task> {
     return this.request<Task>(`/api/tasks/${id}/claim`, {
       method: "POST",
-      body: JSON.stringify({ agent_id: agentId }),
+      body: JSON.stringify({ agentId }),
     });
   }
 
@@ -162,27 +162,27 @@ export class ApiError extends Error {
 // Singleton instance
 export const apiClient = new ApiClient();
 
-// Types
+// Types matching the API response format (camelCase)
 export interface Project {
   id: string;
   name: string;
   description: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Task {
   id: string;
-  project_id: string;
-  agent_id: string | null;
+  projectId: string;
+  agentId: string | null;
   title: string;
   description: string | null;
-  task_type: string;
-  requires_approval: boolean;
+  taskType: string;
+  requiresApproval: boolean;
   status: TaskStatus;
-  created_at: string;
-  updated_at: string;
-  claimed_at: string | null;
+  createdAt: string;
+  updatedAt: string;
+  claimedAt: string | null;
 }
 
 export type TaskStatus =
@@ -196,17 +196,17 @@ export type TaskStatus =
 export interface Agent {
   id: string;
   name: string;
-  created_at: string;
-  last_seen_at: string;
+  createdAt: string;
+  lastSeenAt: string;
 }
 
 export interface TaskLog {
   id: string;
-  task_id: string;
-  agent_id: string;
+  taskId: string;
+  agentId: string;
   action: string;
   details: Record<string, unknown>;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface TaskQueryParams {
