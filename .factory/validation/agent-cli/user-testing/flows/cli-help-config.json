@@ -1,0 +1,174 @@
+{
+  "groupId": "cli-help-config",
+  "testedAt": "2026-03-14T12:00:00.000Z",
+  "isolation": {
+    "cliBinary": "/home/roach/mission-board/dist/mission",
+    "apiServer": "http://localhost:3200",
+    "configFile": "~/.mission-board/config.json",
+    "agentId": "00000001-0000-0000-0000-000000000001",
+    "workingDirectory": "/home/roach/mission-board"
+  },
+  "toolsUsed": ["shell-execution"],
+  "assertions": [
+    {
+      "id": "VAL-CLI-001",
+      "title": "CLI help and usage",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run ./dist/mission --help",
+          "expected": "Usage info, commands, and options displayed",
+          "observed": "Full usage banner displayed with all 11 commands (init, config, set-agent, create, list, projects, claim, update, release, show, help), global options (-V/--version, -h/--help), description, examples section, and configuration section. Exit code 0."
+        },
+        {
+          "action": "Run ./dist/mission create --help",
+          "expected": "Create command options displayed",
+          "observed": "Detailed help for create command shown with options: --project, --title, --type, --description. Includes description, examples, and config section. Exit code 0."
+        },
+        {
+          "action": "Run ./dist/mission list --help",
+          "expected": "List command options displayed",
+          "observed": "Detailed help for list command shown with options: --project, --status. Includes description, examples, and config section. Exit code 0."
+        },
+        {
+          "action": "Run ./dist/mission claim --help",
+          "expected": "Claim command info displayed",
+          "observed": "Detailed help for claim command shown with argument <task-id> and its description. Includes description, examples, and config section. Exit code 0."
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "N/A (local CLI commands, no API calls)",
+        "terminalOutput": [
+          "agent-cli/cli-help-config/VAL-CLI-001-help-output.txt",
+          "agent-cli/cli-help-config/VAL-CLI-001-create-help.txt",
+          "agent-cli/cli-help-config/VAL-CLI-001-list-help.txt",
+          "agent-cli/cli-help-config/VAL-CLI-001-claim-help.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-002",
+      "title": "Config file creation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Backup and remove config file",
+          "expected": "Config file removed",
+          "observed": "Config backed up to .bak and removed successfully"
+        },
+        {
+          "action": "Run ./dist/mission list with no config",
+          "expected": "Graceful handling of missing config",
+          "observed": "Command runs successfully ('No tasks found.'), CLI auto-generates a new config file with a random agent UUID and default api_url. Exit code 0."
+        },
+        {
+          "action": "Run ./dist/mission config to verify auto-generated config",
+          "expected": "Shows auto-generated config content",
+          "observed": "Shows config file path, auto-generated agent ID (cc4f5a71-05a9-4f75-964c-8b96ed6b9d6b), and API URL (http://localhost:3200). Exit code 0."
+        },
+        {
+          "action": "Run ./dist/mission create with auto-generated config",
+          "expected": "Task created successfully using auto-generated config",
+          "observed": "Task created successfully (ae35f402-f005-451b-834c-fac43430e6e5) using auto-generated agent_id. Exit code 0."
+        },
+        {
+          "action": "Restore original config file",
+          "expected": "Original config restored",
+          "observed": "Original config (agent_id: 00000001-0000-0000-0000-000000000001) restored from backup"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "GET /api/tasks -> 200, POST /api/tasks -> 201",
+        "terminalOutput": [
+          "agent-cli/cli-help-config/VAL-CLI-002-config-creation.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-008",
+      "title": "CLI error handling",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run ./dist/mission create --project invalid-uuid --title 'test' --type implementation",
+          "expected": "Clear error message, exit code 1",
+          "observed": "'Error: Invalid project ID format' with helpful UUID example. Exit code 1."
+        },
+        {
+          "action": "Run ./dist/mission claim 00000000-0000-0000-0000-000000000000",
+          "expected": "Error for non-existent task, exit code 1",
+          "observed": "'Error (404): Task not found'. Exit code 1."
+        },
+        {
+          "action": "Run ./dist/mission show 00000000-0000-0000-0000-000000000000",
+          "expected": "Error for non-existent task, exit code 1",
+          "observed": "'Error (404): Task not found'. Exit code 1."
+        },
+        {
+          "action": "Run ./dist/mission list --status invalid_status",
+          "expected": "Error for invalid status, exit code 1",
+          "observed": "'Error: Invalid status \"invalid_status\"' with list of valid statuses. Exit code 1."
+        },
+        {
+          "action": "Run ./dist/mission show not-a-uuid",
+          "expected": "Error for invalid task ID format, exit code 1",
+          "observed": "'Error: Invalid task ID format' with UUID example. Exit code 1."
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "N/A (input validation catches errors before API calls, or API returns 404)",
+        "terminalOutput": [
+          "agent-cli/cli-help-config/VAL-CLI-008-error-handling.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-009",
+      "title": "CLI binary compilation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Verify binary exists and runs",
+          "expected": "./dist/mission --help runs successfully",
+          "observed": "Binary exists, --help output displayed correctly. Exit code 0."
+        },
+        {
+          "action": "Check binary file type",
+          "expected": "ELF executable",
+          "observed": "ELF 64-bit LSB executable, x86-64, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0"
+        },
+        {
+          "action": "Verify no Bun dependency",
+          "expected": "Binary runs without bun in PATH",
+          "observed": "Binary runs successfully with PATH restricted to /usr/bin:/bin:/usr/sbin:/sbin (no bun). ldd shows only standard system libs: libc, libpthread, libdl, libm."
+        },
+        {
+          "action": "Run ./dist/mission --version",
+          "expected": "Version displayed",
+          "observed": "Version 1.0.0 displayed. Exit code 0."
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "N/A (local binary verification)",
+        "terminalOutput": [
+          "agent-cli/cli-help-config/VAL-CLI-009-binary-info.txt"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 4 assertions: all passed. VAL-CLI-001: Help output comprehensive with all commands, options, examples. VAL-CLI-002: CLI auto-generates config with random agent UUID when missing, works seamlessly. VAL-CLI-008: All error cases produce clear messages and exit code 1. VAL-CLI-009: Binary is standalone ELF executable with no Bun dependency."
+}

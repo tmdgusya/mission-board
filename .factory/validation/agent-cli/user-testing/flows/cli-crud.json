@@ -1,0 +1,145 @@
+{
+  "groupId": "cli-crud",
+  "testedAt": "2026-03-14T15:12:00.000Z",
+  "isolation": {
+    "cliBinary": "/home/roach/mission-board/dist/mission",
+    "apiServer": "http://localhost:3200",
+    "configFile": "~/.mission-board/config.json",
+    "agentId": "00000001-0000-0000-0000-000000000001",
+    "workingDirectory": "/home/roach/mission-board"
+  },
+  "toolsUsed": ["shell-execution", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-CLI-003",
+      "title": "Create task command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run: ./dist/mission create --project 1683c3e2-5f9d-414d-980f-29817b238445 --title 'Validation test task VAL-CLI-003-A' --type implementation",
+          "expected": "Exit code 0, success message with task ID",
+          "observed": "Exit code 0, output: '✓ Task created successfully: 4d2d13bc-e930-4b8d-9dbc-da3364078453'"
+        },
+        {
+          "action": "Verify task via API: curl -sf http://localhost:3200/api/tasks/4d2d13bc-e930-4b8d-9dbc-da3364078453",
+          "expected": "Task exists with correct title, type, project, status=backlog",
+          "observed": "Task exists: title='Validation test task VAL-CLI-003-A', taskType='implementation', status='backlog', description=null"
+        },
+        {
+          "action": "Run: ./dist/mission create --project 1683c3e2-5f9d-414d-980f-29817b238445 --title 'Validation test task VAL-CLI-003-B' --type bugfix --description 'A test task with description for VAL-CLI-003'",
+          "expected": "Exit code 0, success message with task ID",
+          "observed": "Exit code 0, output: '✓ Task created successfully: 6fc3ef94-d099-4042-8e9c-d9c01acffdaf'"
+        },
+        {
+          "action": "Verify task with description via API: curl -sf http://localhost:3200/api/tasks/6fc3ef94-d099-4042-8e9c-d9c01acffdaf",
+          "expected": "Task exists with description field populated",
+          "observed": "Task exists: description='A test task with description for VAL-CLI-003', taskType='bugfix'"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": ["agent-cli/cli-crud/VAL-CLI-003-create-task-A.txt", "agent-cli/cli-crud/VAL-CLI-003-create-task-B.txt"],
+        "apiVerification": "Both tasks verified present via GET /api/tasks/:id"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-004",
+      "title": "List tasks command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Claim task first: ./dist/mission claim 4d2d13bc-e930-4b8d-9dbc-da3364078453 (to set agentId)",
+          "expected": "Task claimed successfully, agentId set",
+          "observed": "Task claimed, status=in_progress, agentId=00000001-0000-0000-0000-000000000001"
+        },
+        {
+          "action": "Run: ./dist/mission list",
+          "expected": "Shows tasks for configured agent, formatted table",
+          "observed": "Formatted table with 1 task (claimed task), headers: ID, Title, Status, Type, Created. Total: 1 task. Exit code 0."
+        },
+        {
+          "action": "Run: ./dist/mission list --project 1683c3e2-5f9d-414d-980f-29817b238445",
+          "expected": "Shows tasks filtered by project",
+          "observed": "Same 1 task shown (matches project filter). Exit code 0."
+        },
+        {
+          "action": "Run: ./dist/mission list --status in_progress",
+          "expected": "Shows only in_progress tasks",
+          "observed": "1 task shown. Exit code 0."
+        },
+        {
+          "action": "Run: ./dist/mission list --status backlog",
+          "expected": "No tasks (agent has no backlog tasks)",
+          "observed": "No tasks found. Exit code 0."
+        },
+        {
+          "action": "Run: ./dist/mission list --project 1683c3e2-5f9d-414d-980f-29817b238445 --status in_progress",
+          "expected": "Combined filters work",
+          "observed": "1 task shown. Exit code 0."
+        },
+        {
+          "action": "Compare with API: curl -sf http://localhost:3200/api/tasks?agent_id=00000001-0000-0000-0000-000000000001",
+          "expected": "API returns same tasks as CLI",
+          "observed": "API returns 1 task matching CLI output exactly"
+        },
+        {
+          "action": "Compare filtered: curl -sf 'http://localhost:3200/api/tasks?agent_id=...&status=in_progress'",
+          "expected": "API filtered results match CLI filtered results",
+          "observed": "API returns 1 task matching CLI filtered output"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": ["agent-cli/cli-crud/VAL-CLI-004-list-tasks.txt"],
+        "apiVerification": "CLI output consistent with GET /api/tasks?agent_id=...&status=... responses"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-011",
+      "title": "List projects command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run: ./dist/mission projects",
+          "expected": "Lists all projects with ID and name",
+          "observed": "Formatted table with 2 projects: test-project (1683c3e2...) and another-project (4f47900b...), with descriptions. Total: 2 projects. Exit code 0."
+        },
+        {
+          "action": "Verify test-project appears",
+          "expected": "test-project in output",
+          "observed": "YES - 'test-project' present in output"
+        },
+        {
+          "action": "Verify another-project appears",
+          "expected": "another-project in output",
+          "observed": "YES - 'another-project' present in output"
+        },
+        {
+          "action": "Verify project IDs included",
+          "expected": "UUID IDs visible in output",
+          "observed": "YES - Full UUID IDs shown in first column"
+        },
+        {
+          "action": "Compare with API: curl -sf http://localhost:3200/api/projects",
+          "expected": "API returns same projects",
+          "observed": "API returns 2 projects matching CLI output (same IDs, names, descriptions)"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": ["agent-cli/cli-crud/VAL-CLI-011-projects.txt"],
+        "apiVerification": "CLI output consistent with GET /api/projects response"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The `mission list` command always filters by the configured agent_id. Newly created tasks have agentId=null until claimed, so they do NOT appear in `mission list` output. This means the natural workflow of create→list does not work as expected — users must claim tasks before they appear in the default list view. This is a design choice rather than a bug, but may confuse users.",
+      "resolved": false,
+      "resolution": "Worked around by claiming a task before testing list filters. The assertion specifies 'displays tasks for configured agent_id' which is technically correct behavior.",
+      "affectedAssertions": ["VAL-CLI-004"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed. VAL-CLI-003 (create task) works with and without --description flag. VAL-CLI-004 (list tasks) shows formatted table, filters by project and status work correctly, output matches API data. VAL-CLI-011 (list projects) shows all projects with IDs and names, matches API data. Note: list command filters by agent_id, so unclaimed tasks don't appear in default list."
+}

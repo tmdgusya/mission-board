@@ -1,0 +1,126 @@
+{
+  "groupId": "cli-lifecycle",
+  "testedAt": "2026-03-14T00:13:00.000Z",
+  "isolation": {
+    "cliBinary": "/home/roach/mission-board/dist/mission",
+    "apiServer": "http://localhost:3200",
+    "configFile": "~/.mission-board/config.json",
+    "agentId": "00000001-0000-0000-0000-000000000001",
+    "workingDirectory": "/home/roach/mission-board",
+    "testProjectId": "1683c3e2-5f9d-414d-980f-29817b238445"
+  },
+  "toolsUsed": ["shell-execution", "curl"],
+  "assertions": [
+    {
+      "id": "VAL-CLI-005",
+      "title": "Claim task command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create task 'Lifecycle test task' via CLI",
+          "expected": "Task created with ID returned",
+          "observed": "Task created successfully: 3574f7aa-21b7-403d-91c7-ab6b6eabf798, exit code 0"
+        },
+        {
+          "action": "Run ./dist/mission claim 3574f7aa-21b7-403d-91c7-ab6b6eabf798",
+          "expected": "Exit code 0, success message displayed",
+          "observed": "✓ Task 3574f7aa-21b7-403d-91c7-ab6b6eabf798 claimed successfully, Status: in_progress, Agent: 00000001-0000-0000-0000-000000000001, exit code 0"
+        },
+        {
+          "action": "Verify via API GET /api/tasks/3574f7aa-21b7-403d-91c7-ab6b6eabf798",
+          "expected": "status=in_progress, agentId set, claimedAt set",
+          "observed": "status=in_progress, agentId=00000001-0000-0000-0000-000000000001, claimedAt=2026-03-13T15:13:06.000Z"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "agent-cli/cli-lifecycle/VAL-CLI-005-claim-task.txt",
+        "apiVerification": "GET /api/tasks/3574f7aa-21b7-403d-91c7-ab6b6eabf798 -> 200, confirmed status=in_progress"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-006",
+      "title": "Update task command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run ./dist/mission update 3574f7aa... --status review (in_progress -> review, VALID)",
+          "expected": "Exit code 0, success message",
+          "observed": "✓ Task updated to review, exit code 0. API confirms status=review."
+        },
+        {
+          "action": "Run ./dist/mission update 3574f7aa... --status done (review -> done, VALID)",
+          "expected": "Exit code 0, success message",
+          "observed": "✓ Task updated to done, exit code 0."
+        },
+        {
+          "action": "Create task 'Invalid transition test', claim it, then run ./dist/mission update 8acae5d5... --status done (in_progress -> done, INVALID)",
+          "expected": "Exit code 1, error about invalid transition",
+          "observed": "Error (400): Invalid status transition from \"in_progress\" to \"done\". Valid transitions from \"in_progress\" are: ready, review, blocked. Exit code 1."
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "agent-cli/cli-lifecycle/VAL-CLI-006-update-task.txt",
+        "apiVerification": "Both valid transitions confirmed via API. Invalid transition rejected with 400."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-007",
+      "title": "Release task command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create task 'Release test task', claim it",
+          "expected": "Task claimed, status=in_progress",
+          "observed": "Task 7d818959-12d7-4f85-be68-a5019e42c757 created and claimed successfully"
+        },
+        {
+          "action": "Run ./dist/mission release 7d818959-12d7-4f85-be68-a5019e42c757",
+          "expected": "Exit code 0, success message",
+          "observed": "✓ Task released successfully, Status: ready, Agent: Unassigned, exit code 0"
+        },
+        {
+          "action": "Verify via API GET /api/tasks/7d818959-12d7-4f85-be68-a5019e42c757",
+          "expected": "agentId=null, status=ready, claimedAt=null",
+          "observed": "status=ready, agentId=None, claimedAt=None"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "agent-cli/cli-lifecycle/VAL-CLI-007-release-task.txt",
+        "apiVerification": "GET /api/tasks/7d818959... -> 200, confirmed status=ready, agentId=None, claimedAt=None"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-010",
+      "title": "Show task detail command",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run ./dist/mission show 3574f7aa-21b7-403d-91c7-ab6b6eabf798 (claimed task)",
+          "expected": "Output contains title, description, status, agent, project, type, timestamps",
+          "observed": "All fields present: title='Lifecycle test task', description='Task for testing claim/update/release/show', status=done, type=feature, assigned to agent UUID, project=test-project, created/updated/claimed timestamps shown, exit code 0"
+        },
+        {
+          "action": "Run ./dist/mission show 7d818959-12d7-4f85-be68-a5019e42c757 (released/unclaimed task)",
+          "expected": "Output shows 'Unclaimed' for agent, no claimed_at",
+          "observed": "title='Release test task', description='(No description)', status=ready, assigned to=Unclaimed, project=test-project, created/updated timestamps shown, no claimed_at (task was released), exit code 0"
+        },
+        {
+          "action": "Verify all required fields present in output",
+          "expected": "title, description, status, agent name, project name, task type, created_at, updated_at, claimed_at",
+          "observed": "All 9 fields verified present in claimed task output. Released task correctly shows 'Unclaimed' and omits claimed_at."
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "agent-cli/cli-lifecycle/VAL-CLI-010-show-task.txt",
+        "fieldsVerified": ["title", "description", "status", "agent name (or Unclaimed)", "project name", "task type", "created_at", "updated_at", "claimed_at"]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 4 assertions: all 4 passed (VAL-CLI-005 claim, VAL-CLI-006 update with valid/invalid transitions, VAL-CLI-007 release, VAL-CLI-010 show details). CLI commands work correctly with proper exit codes, clear output, and API state verified for each operation."
+}

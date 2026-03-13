@@ -80,6 +80,30 @@ Testing surface, validation approach, and resource constraints for the mission b
 - Note any unexpected behavior or error messages
 - Record timing if relevant to assertion
 
+## Flow Validator Guidance: CLI
+
+### Isolation Rules
+- CLI tests MUST run sequentially — they share the same config file (~/.mission-board/config.json) and database
+- Use unique task titles to avoid confusion but share the same agent_id and projects
+- CLI binary is at ./dist/mission (compiled ELF binary)
+- Config file exists at ~/.mission-board/config.json with agent_id and api_url
+
+### Testing Approach
+- Execute compiled binary directly: `./dist/mission <command>`
+- Check exit codes: `$?` — 0 for success, 1 for error
+- Verify terminal output contains expected strings
+- For VAL-CLI-009, verify binary runs standalone (not requiring Bun)
+
+### CLI Binary
+- Path: /home/roach/mission-board/dist/mission
+- Config: ~/.mission-board/config.json (agent_id: 00000001-0000-0000-0000-000000000001, api_url: http://localhost:3200)
+- API must be running on port 3200 for commands that interact with the API
+
+### Seeded Data
+- Project "test-project" (ID: varies per seed, use `./dist/mission projects` to get ID)
+- Project "another-project" (ID: varies per seed)
+- Agent ID in config: 00000001-0000-0000-0000-000000000001
+
 ---
 
 ## Testing Notes
