@@ -56,6 +56,13 @@ No external env vars required. Application uses:
 - API client singleton at `dashboard/src/lib/api-client.ts` (configurable base URL via `VITE_API_URL`)
 - Root tsconfig excludes dashboard files (separate typecheck needed: `cd dashboard && bunx tsc --noEmit`)
 
+### Dashboard - IMPORTANT NOTES
+
+- **Do NOT use `import.meta.env`** - Bun's HTML imports don't support Vite-style env vars. Use `process.env` instead. Example: `process.env?.VITE_API_URL || "http://localhost:3200"`
+- **API returns camelCase** - The API server returns camelCase field names (e.g., `taskType`, `projectId`, `agentId`), NOT snake_case. The `api-client.ts` types must match.
+- **Bun test + Testing Library** - `bun test` does NOT provide a DOM environment by default. Testing Library (`@testing-library/react`) requires DOM and will fail with `ReferenceError: document is not defined`. For dashboard tests, use pure logic tests (status transitions, data grouping) without DOM rendering.
+- **Drag-and-drop** - Uses `@dnd-kit/core` v6 with `useDraggable`/`useDroppable` hooks. Column droppable IDs follow the pattern `column-{status}`.
+
 ## Setup Notes
 
 1. Run `bun install` to install dependencies

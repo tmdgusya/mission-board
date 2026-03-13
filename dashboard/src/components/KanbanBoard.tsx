@@ -1,14 +1,13 @@
 import React, { useState, useCallback } from "react";
 import {
   DndContext,
-  DragEndEvent,
   DragOverlay,
-  DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCorners,
 } from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import type { Task } from "../lib/api-client";
 import {
   TASK_STATUSES,

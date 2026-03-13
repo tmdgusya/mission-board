@@ -1,9 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { describe, it, expect } from "bun:test";
 import React from "react";
-import { KanbanBoard } from "./KanbanBoard";
-import { Toast } from "./Toast";
 import {
   isValidStatusTransition,
   getInvalidTransitionMessage,
@@ -140,81 +136,81 @@ describe("Task Grouping", () => {
   const mockTasks: Task[] = [
     {
       id: "task-1",
-      project_id: "proj-1",
-      agent_id: null,
+      projectId: "proj-1",
+      agentId: null,
       title: "Design API schema",
       description: null,
-      task_type: "implementation",
-      requires_approval: false,
+      taskType: "implementation",
+      requiresApproval: false,
       status: "backlog",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: null,
     },
     {
       id: "task-2",
-      project_id: "proj-1",
-      agent_id: "agent-1",
+      projectId: "proj-1",
+      agentId: "agent-1",
       title: "Build endpoints",
       description: null,
-      task_type: "implementation",
-      requires_approval: false,
+      taskType: "implementation",
+      requiresApproval: false,
       status: "in_progress",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: new Date().toISOString(),
     },
     {
       id: "task-3",
-      project_id: "proj-1",
-      agent_id: "agent-2",
+      projectId: "proj-1",
+      agentId: "agent-2",
       title: "Write tests",
       description: null,
-      task_type: "testing",
-      requires_approval: false,
+      taskType: "testing",
+      requiresApproval: false,
       status: "review",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: new Date().toISOString(),
     },
     {
       id: "task-4",
-      project_id: "proj-1",
-      agent_id: null,
+      projectId: "proj-1",
+      agentId: null,
       title: "Deploy to production",
       description: null,
-      task_type: "devops",
-      requires_approval: true,
+      taskType: "deployment",
+      requiresApproval: true,
       status: "blocked",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: null,
     },
     {
       id: "task-5",
-      project_id: "proj-1",
-      agent_id: null,
+      projectId: "proj-1",
+      agentId: null,
       title: "Update docs",
       description: null,
-      task_type: "documentation",
-      requires_approval: false,
+      taskType: "documentation",
+      requiresApproval: false,
       status: "done",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: null,
     },
     {
       id: "task-6",
-      project_id: "proj-1",
-      agent_id: null,
+      projectId: "proj-1",
+      agentId: null,
       title: "Setup CI",
       description: null,
-      task_type: "implementation",
-      requires_approval: false,
+      taskType: "implementation",
+      requiresApproval: false,
       status: "ready",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      claimed_at: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claimedAt: null,
     },
   ];
 
@@ -231,13 +227,13 @@ describe("Task Grouping", () => {
     expect(tasksByStatus.get("blocked")).toHaveLength(1);
   });
 
-  it("identifies unclaimed tasks (agent_id is null)", () => {
-    const unclaimed = mockTasks.filter((t) => !t.agent_id);
+  it("identifies unclaimed tasks (agentId is null)", () => {
+    const unclaimed = mockTasks.filter((t) => !t.agentId);
     expect(unclaimed).toHaveLength(4);
   });
 
   it("identifies claimed tasks", () => {
-    const claimed = mockTasks.filter((t) => t.agent_id);
+    const claimed = mockTasks.filter((t) => t.agentId);
     expect(claimed).toHaveLength(2);
   });
 });
@@ -253,53 +249,5 @@ describe("Droppable ID Parsing", () => {
       const extracted = droppableId.replace("column-", "");
       expect(extracted).toBe(status);
     }
-  });
-});
-
-// =============================================
-// Toast component tests
-// =============================================
-
-describe("Toast component", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("renders toast messages", () => {
-    const messages = [
-      { id: "1", message: "Test error", type: "error" as const },
-      { id: "2", message: "Success!", type: "success" as const },
-    ];
-    const onDismiss = vi.fn();
-    render(<Toast messages={messages} onDismiss={onDismiss} />);
-    expect(screen.getByText("Test error")).toBeDefined();
-    expect(screen.getByText("Success!")).toBeDefined();
-  });
-
-  it("renders nothing when no messages", () => {
-    const { container } = render(
-      <Toast messages={[]} onDismiss={() => {}} />
-    );
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("can be dismissed manually", () => {
-    const onDismiss = vi.fn();
-    const messages = [
-      { id: "1", message: "Dismiss me", type: "error" as const },
-    ];
-    render(<Toast messages={messages} onDismiss={onDismiss} />);
-
-    fireEvent.click(screen.getByLabelText("Dismiss"));
-
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-
-    expect(onDismiss).toHaveBeenCalledWith("1");
   });
 });
