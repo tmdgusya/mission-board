@@ -8,6 +8,8 @@ import { executeClaim } from "./commands/claim";
 import { executeUpdate } from "./commands/update";
 import { executeRelease } from "./commands/release";
 import { executeShow } from "./commands/show";
+import { executeRequestApproval } from "./commands/request-approval";
+import { executeCheckApproval } from "./commands/check-approval";
 import { registerGlobalErrorHandlers } from "./errors";
 import { createInterface } from "node:readline";
 
@@ -75,6 +77,8 @@ program
       "  $ mission update <task-uuid> --status review\n" +
       "  $ mission show <task-uuid>\n" +
       "  $ mission release <task-uuid>\n" +
+      "  $ mission request-approval <task-uuid> --action \"deploy to production\"\n" +
+      "  $ mission check-approval <task-uuid>\n" +
       "  $ mission projects\n" +
       "\n" +
       chalk.bold("Configuration:") + "\n" +
@@ -256,6 +260,36 @@ program
   .argument("<task-id>", "Task UUID to display")
   .action(async (taskId: string) => {
     const exitCode = await executeShow(taskId);
+    process.exit(exitCode);
+  });
+
+// Request approval command
+program
+  .command("request-approval")
+  .description(
+    "Request approval for a task action.\n\n" +
+    "  Creates an approval request for the specified task. The task must\n" +
+    "  have requires_approval=true. Use " + chalk.cyan("mission check-approval") + " to\n" +
+    "  check the status of your request."
+  )
+  .argument("<task-id>", "Task UUID to request approval for")
+  .requiredOption("--action <description>", "Description of the action requiring approval")
+  .action(async (taskId: string, options: { action: string }) => {
+    const exitCode = await executeRequestApproval(taskId, options.action);
+    process.exit(exitCode);
+  });
+
+// Check approval command
+program
+  .command("check-approval")
+  .description(
+    "Check approval status for a task.\n\n" +
+    "  Shows the current approval status (pending, approved, or denied).\n" +
+    "  If denied, shows the reviewer's notes explaining the decision."
+  )
+  .argument("<task-id>", "Task UUID to check approval status for")
+  .action(async (taskId: string) => {
+    const exitCode = await executeCheckApproval(taskId);
     process.exit(exitCode);
   });
 

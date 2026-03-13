@@ -301,6 +301,18 @@ export async function releaseTask(taskId: string): Promise<Task> {
   return response.json() as Promise<Task>;
 }
 
+export interface ApprovalRequest {
+  id: string;
+  taskId: string;
+  agentId: string;
+  actionRequested: string;
+  status: "pending" | "approved" | "denied";
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -402,4 +414,77 @@ export async function getProject(projectId: string): Promise<Project> {
   }
 
   return response.json() as Promise<Project>;
+}
+
+/**
+ * Request approval for a task
+ * @param taskId - The ID of the task to request approval for
+ * @param actionRequested - Description of the action requiring approval
+ * @returns The created approval request
+ * @throws Error if the API request fails
+ */
+export async function requestApproval(taskId: string, actionRequested: string): Promise<ApprovalRequest> {
+  const config = await loadConfig();
+
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/approvals`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        taskId,
+        agentId: config.agent_id,
+        actionRequested,
+      }),
+    }),
+    API_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<ApprovalRequest>;
+}
+
+/**
+ * Check approval status for a task
+ * @param taskId - The ID of the task to check approval status for
+ * @returns Array of approval requests for the task
+ * @throws Error if the API request fails
+ */
+export async function checkApproval(taskId: string): Promise<ApprovalRequest[]> {
+  const config = await loadConfig();
+
+  const params = new URLSearchParams();
+  params.append("task_id", taskId);
+
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/approvals?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<ApprovalRequest[]>;
 }
