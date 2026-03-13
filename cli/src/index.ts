@@ -3,6 +3,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { loadConfig, getConfigPath, updateConfig, validateAgentId, generateAgentId } from "./config";
 import { executeCreate } from "./commands/create";
+import { executeList, executeProjects } from "./commands/list";
 import { createInterface } from "node:readline";
 
 const program = new Command();
@@ -118,6 +119,29 @@ program
       type: options.type,
       description: options.description,
     });
+    process.exit(exitCode);
+  });
+
+// List tasks command
+program
+  .command("list")
+  .description("List tasks for the configured agent")
+  .option("--project <project-id>", "Filter by project ID (UUID)")
+  .option("--status <status>", "Filter by status (backlog, ready, in_progress, review, done, blocked)")
+  .action(async (options: { project?: string; status?: string }) => {
+    const exitCode = await executeList({
+      project: options.project,
+      status: options.status,
+    });
+    process.exit(exitCode);
+  });
+
+// List projects command
+program
+  .command("projects")
+  .description("List all available projects")
+  .action(async () => {
+    const exitCode = await executeProjects();
     process.exit(exitCode);
   });
 
