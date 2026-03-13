@@ -1,0 +1,242 @@
+{
+  "groupId": "agent-management",
+  "testedAt": "2026-03-13T13:28:37.000Z",
+  "isolation": {
+    "apiBaseUrl": "http://localhost:3200",
+    "agentIdPrefix": "val-agent-",
+    "testProjectId": "5985f7a4-a722-43a3-be0f-4dd80765933a"
+  },
+  "toolsUsed": ["curl"],
+  "assertions": [
+    {
+      "id": "VAL-AGENT-001",
+      "title": "Automatic agent registration",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "List agents before registration",
+          "expected": "New agent should not exist in list",
+          "observed": "Agent list did not contain the new agent_id (17c4a5e6-6044-4edf-93f2-e997461393c9)"
+        },
+        {
+          "action": "Create task with new agent_id",
+          "expected": "Task created and agent auto-registered",
+          "observed": "Task created successfully with 201 status, agent was auto-registered"
+        },
+        {
+          "action": "List agents after registration",
+          "expected": "New agent should now exist in list",
+          "observed": "Agent list now contains the new agent with id, name, createdAt, lastSeenAt fields"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "GET /api/agents -> 200 (before)",
+          "POST /api/tasks -> 201 (auto-registers agent)",
+          "GET /api/agents -> 200 (after, includes new agent)"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-001-agents-before.json",
+          "core-infrastructure/agent-management/VAL-AGENT-001-agents-after.json",
+          "core-infrastructure/agent-management/VAL-AGENT-001-task-response.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-002",
+      "title": "List agents",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET /api/agents",
+          "expected": "Returns array of agents with id, name, created_at, last_seen_at",
+          "observed": "Returned array with agents containing id, name, createdAt, lastSeenAt fields"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "GET /api/agents -> 200"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-002-agents-list.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-003",
+      "title": "Get agent details",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET /api/agents/:id with existing agent",
+          "expected": "Returns agent details with 200",
+          "observed": "Returned agent details: id, name, createdAt, lastSeenAt"
+        },
+        {
+          "action": "GET /api/agents/:id with non-existent agent",
+          "expected": "Returns 404 with error message",
+          "observed": "Returned 404 with {error: 'Agent not found'}"
+        },
+        {
+          "action": "GET /api/agents/:id with invalid UUID format",
+          "expected": "Returns 400 with error message",
+          "observed": "Returned 400 with {error: 'Invalid UUID format'}"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "GET /api/agents/17c4a5e6-6044-4edf-93f2-e997461393c9 -> 200",
+          "GET /api/agents/00000000-0000-0000-0000-000000000000 -> 404",
+          "GET /api/agents/not-a-uuid -> 400"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-003-existing-agent.json",
+          "core-infrastructure/agent-management/VAL-AGENT-003-non-existent-agent.txt",
+          "core-infrastructure/agent-management/VAL-AGENT-003-invalid-uuid.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-004",
+      "title": "Agent task history",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create task for agent",
+          "expected": "Task created successfully",
+          "observed": "Task created with id 17e02d83-f6e6-4ec2-8704-fb1998a7e3e4"
+        },
+        {
+          "action": "GET /api/agents/:id/tasks",
+          "expected": "Returns array of tasks assigned to agent",
+          "observed": "Returned array containing the created task with all task fields"
+        },
+        {
+          "action": "GET /api/agents/:id/tasks for non-existent agent",
+          "expected": "Returns 404 with error message",
+          "observed": "Returned 404 with {error: 'Agent not found'}"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "POST /api/tasks -> 201",
+          "GET /api/agents/50617586-88f6-4b68-b52d-4431d11418c7/tasks -> 200",
+          "GET /api/agents/00000000-0000-0000-0000-000000000000/tasks -> 404"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-004-task-created.json",
+          "core-infrastructure/agent-management/VAL-AGENT-004-task-history.json",
+          "core-infrastructure/agent-management/VAL-AGENT-004-non-existent-agent.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-005",
+      "title": "Agent last_seen tracking",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create task for new agent and record lastSeenAt",
+          "expected": "Agent registered with initial lastSeenAt timestamp",
+          "observed": "Agent created with lastSeenAt: 2026-03-13T13:27:47.000Z"
+        },
+        {
+          "action": "Wait 2 seconds and make another API request",
+          "expected": "Second API request succeeds",
+          "observed": "Second task created successfully"
+        },
+        {
+          "action": "Check agent lastSeenAt updated",
+          "expected": "lastSeenAt timestamp should be updated",
+          "observed": "lastSeenAt updated to 2026-03-13T13:27:49.000Z (2 seconds later)"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "POST /api/tasks (agent: 3ff169de-02dc-4a95-8740-b35178d16f4f) -> 201",
+          "GET /api/agents/3ff169de-02dc-4a95-8740-b35178d16f4f -> 200 (lastSeenAt: 2026-03-13T13:27:47.000Z)",
+          "POST /api/tasks (same agent) -> 201",
+          "GET /api/agents/3ff169de-02dc-4a95-8740-b35178d16f4f -> 200 (lastSeenAt: 2026-03-13T13:27:49.000Z)"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-005-initial-agent.json",
+          "core-infrastructure/agent-management/VAL-AGENT-005-updated-agent.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-006",
+      "title": "Agent registration idempotency",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Count agents before any operations",
+          "expected": "Get baseline count",
+          "observed": "9 agents in database"
+        },
+        {
+          "action": "Create first task with new agent_id",
+          "expected": "Agent registered, count increases by 1",
+          "observed": "Task created, agent count: 10"
+        },
+        {
+          "action": "Create second task with same agent_id",
+          "expected": "No duplicate agent created, count stays same",
+          "observed": "Task created, agent count still: 10, only 1 agent with the test id"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "GET /api/agents -> 200 (count: 9)",
+          "POST /api/tasks (agent: 45e064ee-5021-4eeb-81ed-81361224fe69) -> 201",
+          "GET /api/agents -> 200 (count: 10)",
+          "POST /api/tasks (same agent) -> 201",
+          "GET /api/agents -> 200 (count: 10)"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-006-agents-before.json",
+          "core-infrastructure/agent-management/VAL-AGENT-006-agents-after-1.json",
+          "core-infrastructure/agent-management/VAL-AGENT-006-agents-after-2.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AGENT-007",
+      "title": "Invalid agent_id handling",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Create task with non-existent agent_id",
+          "expected": "Returns 400 with error message (per validation contract)",
+          "observed": "Returned 201 and auto-registered the agent (99999999-9999-9999-9999-999999999999)"
+        },
+        {
+          "action": "Claim task with non-existent agent_id",
+          "expected": "Returns 400 with error message (per validation contract)",
+          "observed": "Returned 200 and auto-registered the agent (88888888-8888-8888-8888-888888888888)"
+        }
+      ],
+      "evidence": {
+        "network": [
+          "POST /api/tasks (agent: 99999999-9999-9999-9999-999999999999) -> 201 (auto-registered)",
+          "GET /api/agents/99999999-9999-9999-9999-999999999999 -> 200 (agent exists)",
+          "POST /api/tasks/747b58d7-e73e-46a9-a699-695901e59bc2/claim (agent: 88888888-8888-8888-8888-888888888888) -> 200 (auto-registered)"
+        ],
+        "files": [
+          "core-infrastructure/agent-management/VAL-AGENT-007-create-task-invalid-agent.txt",
+          "core-infrastructure/agent-management/VAL-AGENT-007-claim-task-invalid-agent.txt"
+        ]
+      },
+      "issues": "Implementation auto-registers agents instead of returning 400 for non-existent agent_id. This is a discrepancy between the validation contract (which expects 400) and the actual implementation (which auto-registers)."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 7 assertions: 6 passed, 1 failed. VAL-AGENT-007 failed because the implementation auto-registers agents instead of returning 400 for non-existent agent_id, which differs from the validation contract specification."
+}

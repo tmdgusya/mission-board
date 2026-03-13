@@ -1,0 +1,64 @@
+{
+  "milestone": "core-infrastructure",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 35,
+    "passed": 34,
+    "failed": 1,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-PROJ-001",
+    "VAL-PROJ-002",
+    "VAL-PROJ-003",
+    "VAL-PROJ-004",
+    "VAL-PROJ-005",
+    "VAL-PROJ-006",
+    "VAL-TASK-001",
+    "VAL-TASK-002",
+    "VAL-TASK-003",
+    "VAL-TASK-004",
+    "VAL-TASK-005",
+    "VAL-TASK-006",
+    "VAL-TASK-007",
+    "VAL-TASK-008",
+    "VAL-TASK-009",
+    "VAL-TASK-010",
+    "VAL-AGENT-001",
+    "VAL-AGENT-002",
+    "VAL-AGENT-003",
+    "VAL-AGENT-004",
+    "VAL-AGENT-005",
+    "VAL-AGENT-006",
+    "VAL-LOG-001",
+    "VAL-LOG-002",
+    "VAL-LOG-003",
+    "VAL-LOG-004",
+    "VAL-LOG-005",
+    "VAL-LOG-006",
+    "VAL-LOG-007"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-AGENT-007",
+      "reason": "Implementation auto-registers agents instead of returning 400 for non-existent agent_id. When creating a task or claiming with a non-existent agent_id, the API auto-registers the agent rather than returning a 400 error as specified in the validation contract."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added Flow Validator Guidance: API section with isolation rules, testing approach, and API base URL",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null,
+  "flowReports": [
+    ".factory/validation/core-infrastructure/user-testing/flows/project-management.json",
+    ".factory/validation/core-infrastructure/user-testing/flows/task-management.json",
+    ".factory/validation/core-infrastructure/user-testing/flows/task-claim-release.json",
+    ".factory/validation/core-infrastructure/user-testing/flows/agent-management.json",
+    ".factory/validation/core-infrastructure/user-testing/flows/activity-logging.json"
+  ]
+}

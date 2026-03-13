@@ -1,0 +1,105 @@
+{
+  "groupId": "task-claim-release",
+  "testedAt": "2026-03-13T13:27:30.000Z",
+  "isolation": {
+    "apiBaseUrl": "http://localhost:3200",
+    "resourcePrefix": "val-claim-",
+    "agentId": "test-agent-001 (20817039-daa7-4b1c-8426-0e48d9c9327a)",
+    "testProjectId": "26bcc4a6-f832-4ca9-b5a3-1252aeb211a5",
+    "testTaskId": "a3e31a73-b5b7-49ff-999e-e1de9c183054"
+  },
+  "toolsUsed": ["curl"],
+  "assertions": [
+    {
+      "id": "VAL-TASK-005",
+      "title": "Claim task",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create test project",
+          "expected": "Project created with 201 status",
+          "observed": "Project created: 26bcc4a6-f832-4ca9-b5a3-1252aeb211a5"
+        },
+        {
+          "action": "Create test task without agent",
+          "expected": "Task created in 'backlog' status with null agentId",
+          "observed": "Task created: a3e31a73-b5b7-49ff-999e-e1de9c183054 in 'backlog' status"
+        },
+        {
+          "action": "Transition task to 'ready' status",
+          "expected": "Task status updated to 'ready'",
+          "observed": "Task status changed to 'ready'"
+        },
+        {
+          "action": "POST /api/tasks/:id/claim with agentId",
+          "expected": "200 response, status to in_progress, agent_id set, claimed_at set",
+          "observed": "200 response, status changed to 'in_progress', agentId set to '20817039-daa7-4b1c-8426-0e48d9c9327a', claimedAt set to '2026-03-13T13:26:40.000Z'"
+        }
+      ],
+      "evidence": {
+        "curlCommands": [
+          "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/claim",
+          "Body: {\"agentId\": \"20817039-daa7-4b1c-8426-0e48d9c9327a\"}"
+        ],
+        "network": "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/claim -> 200",
+        "files": ["core-infrastructure/task-claim-release/VAL-TASK-005-claim-task.txt"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-006",
+      "title": "Claim already claimed task",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Verify task is claimed by agent 20817039-daa7-4b1c-8426-0e48d9c9327a",
+          "expected": "Task shows agentId and status in_progress",
+          "observed": "Task is claimed by 20817039-daa7-4b1c-8426-0e48d9c9327a"
+        },
+        {
+          "action": "POST /api/tasks/:id/claim with different agentId",
+          "expected": "409 conflict with current owner info",
+          "observed": "409 response with error message and currentOwner details including agentId and claimedAt"
+        }
+      ],
+      "evidence": {
+        "curlCommands": [
+          "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/claim",
+          "Body: {\"agentId\": \"30928140-ebb8-5c2d-9537-1f59e0d0438b\"}"
+        ],
+        "network": "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/claim -> 409",
+        "files": ["core-infrastructure/task-claim-release/VAL-TASK-006-claim-conflict.txt"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-007",
+      "title": "Release task",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Verify task is claimed with agentId and in_progress status",
+          "expected": "Task shows agentId, status in_progress, and claimedAt timestamp",
+          "observed": "Task has agentId 20817039-daa7-4b1c-8426-0e48d9c9327a, status in_progress, claimedAt set"
+        },
+        {
+          "action": "POST /api/tasks/:id/release",
+          "expected": "200 response, agent_id null, claimed_at cleared, status to ready",
+          "observed": "200 response, agentId is null, claimedAt is null, status changed to 'ready'"
+        }
+      ],
+      "evidence": {
+        "curlCommands": [
+          "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/release",
+          "Body: {}"
+        ],
+        "network": "POST /api/tasks/a3e31a73-b5b7-49ff-999e-e1de9c183054/release -> 200",
+        "files": ["core-infrastructure/task-claim-release/VAL-TASK-007-release-task.txt"]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed, 0 blocked. All claim/release functionality works as specified."
+}

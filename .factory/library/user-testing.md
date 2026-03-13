@@ -59,6 +59,29 @@ Testing surface, validation approach, and resource constraints for the mission b
 3. **CLI tests**: Sequential or parallel with different task IDs
 4. **Database state**: Use transactions or separate test databases per validator
 
+## Flow Validator Guidance: API
+
+### Isolation Rules
+- Each validator should use unique resource IDs (project names, agent IDs) to avoid conflicts
+- Tests can run in parallel - API is stateless and handles concurrent requests
+- Use descriptive prefixes for test resources (e.g., `val-proj-001-test`, `val-agent-abc`)
+
+### Testing Approach
+- Use `curl` for all API requests
+- Verify response status codes match expected values
+- Verify response body structure matches contract
+- Test both success and error cases
+
+### API Base URL
+- http://localhost:3200
+
+### Evidence Collection
+- Save curl commands and their output
+- Note any unexpected behavior or error messages
+- Record timing if relevant to assertion
+
+---
+
 ## Testing Notes
 
 - Greenfield project: validation starts after each milestone completes

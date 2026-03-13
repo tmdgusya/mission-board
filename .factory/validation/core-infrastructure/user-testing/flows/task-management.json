@@ -1,0 +1,242 @@
+{
+  "groupId": "task-management",
+  "testedAt": "2026-03-13T13:28:22.000Z",
+  "isolation": {
+    "apiBaseUrl": "http://localhost:3200",
+    "resourcePrefix": "val-task-",
+    "testProjectId": "b59ce5c6-7d73-4829-aaff-ac8bf5a4d6b3",
+    "secondProjectId": "bf42a57c-1f6e-44f3-bd78-a302b1ca6d29"
+  },
+  "toolsUsed": ["curl"],
+  "assertions": [
+    {
+      "id": "VAL-TASK-001",
+      "title": "Create task with valid data",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "POST /api/tasks with projectId, title, taskType",
+          "expected": "201 status with created task in backlog status",
+          "observed": "201 response with task id, status='backlog', timestamps"
+        }
+      ],
+      "evidence": {
+        "network": "POST /api/tasks -> 201",
+        "responseFile": "core-infrastructure/task-management/VAL-TASK-001-create-task.json"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-002",
+      "title": "Create task validation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "POST /api/tasks with missing title",
+          "expected": "400 with validation error",
+          "observed": "400 - Validation failed: title required"
+        },
+        {
+          "action": "POST /api/tasks with missing projectId",
+          "expected": "400 with validation error",
+          "observed": "400 - Validation failed: projectId required"
+        },
+        {
+          "action": "POST /api/tasks with non-existent projectId",
+          "expected": "404 with project not found",
+          "observed": "404 - Project not found"
+        }
+      ],
+      "evidence": {
+        "network": "POST /api/tasks (missing title) -> 400, POST /api/tasks (missing project) -> 400, POST /api/tasks (invalid project) -> 404",
+        "responseFiles": [
+          "core-infrastructure/task-management/VAL-TASK-002-missing-title.json",
+          "core-infrastructure/task-management/VAL-TASK-002-missing-project.json",
+          "core-infrastructure/task-management/VAL-TASK-002-invalid-project.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-003",
+      "title": "List tasks with filters",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET /api/tasks (no filters)",
+          "expected": "200 with all tasks array",
+          "observed": "200 with array of all tasks"
+        },
+        {
+          "action": "GET /api/tasks?project_id=<id>",
+          "expected": "200 with tasks filtered by project",
+          "observed": "200 with only tasks from specified project"
+        },
+        {
+          "action": "GET /api/tasks?status=backlog",
+          "expected": "200 with tasks filtered by status",
+          "observed": "200 with only backlog tasks"
+        },
+        {
+          "action": "GET /api/tasks?agent_id=<id>",
+          "expected": "200 with tasks filtered by agent",
+          "observed": "200 with only tasks assigned to agent"
+        },
+        {
+          "action": "GET /api/tasks?project_id=X&status=Y (combined)",
+          "expected": "200 with tasks matching both filters",
+          "observed": "200 with tasks matching both criteria"
+        }
+      ],
+      "evidence": {
+        "network": "GET /api/tasks -> 200, GET /api/tasks?project_id -> 200, GET /api/tasks?status -> 200, GET /api/tasks?agent_id -> 200",
+        "responseFiles": [
+          "core-infrastructure/task-management/VAL-TASK-003-all-tasks.json",
+          "core-infrastructure/task-management/VAL-TASK-003-filter-project.json",
+          "core-infrastructure/task-management/VAL-TASK-003-filter-status.json",
+          "core-infrastructure/task-management/VAL-TASK-003-filter-agent.json",
+          "core-infrastructure/task-management/VAL-TASK-003-filter-combined.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-004",
+      "title": "Get task details",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET /api/tasks/:id with valid UUID",
+          "expected": "200 with full task details",
+          "observed": "200 with complete task object"
+        },
+        {
+          "action": "GET /api/tasks/:id with invalid UUID format",
+          "expected": "400 with invalid UUID error",
+          "observed": "400 - Invalid UUID format"
+        },
+        {
+          "action": "GET /api/tasks/:id with non-existent UUID",
+          "expected": "404 with task not found",
+          "observed": "404 - Task not found"
+        }
+      ],
+      "evidence": {
+        "network": "GET /api/tasks/:valid_id -> 200, GET /api/tasks/:invalid -> 400, GET /api/tasks/:nonexistent -> 404",
+        "responseFiles": [
+          "core-infrastructure/task-management/VAL-TASK-004-valid.json",
+          "core-infrastructure/task-management/VAL-TASK-004-invalid-uuid.json",
+          "core-infrastructure/task-management/VAL-TASK-004-not-found.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-008",
+      "title": "Update task status",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "PATCH /api/tasks/:id with status backlog->ready",
+          "expected": "200 with updated task status=ready",
+          "observed": "200, status changed to ready"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with status ready->in_progress",
+          "expected": "200 with updated task status=in_progress",
+          "observed": "200, status changed to in_progress"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with status in_progress->review",
+          "expected": "200 with updated task status=review",
+          "observed": "200, status changed to review"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with status review->done",
+          "expected": "200 with updated task status=done",
+          "observed": "200, status changed to done"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with status done->blocked",
+          "expected": "200 with updated task status=blocked",
+          "observed": "200, status changed to blocked"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with invalid transition backlog->done",
+          "expected": "400 with transition error",
+          "observed": "400 - Invalid status transition from backlog to done"
+        },
+        {
+          "action": "PATCH /api/tasks/:id with invalid transition ready->review",
+          "expected": "400 with transition error",
+          "observed": "400 - Invalid status transition from ready to review"
+        }
+      ],
+      "evidence": {
+        "network": "PATCH valid transitions -> 200, PATCH invalid transitions -> 400",
+        "responseFiles": [
+          "core-infrastructure/task-management/VAL-TASK-008-backlog-ready.json",
+          "core-infrastructure/task-management/VAL-TASK-008-ready-inprogress.json",
+          "core-infrastructure/task-management/VAL-TASK-008-inprogress-review.json",
+          "core-infrastructure/task-management/VAL-TASK-008-review-done.json",
+          "core-infrastructure/task-management/VAL-TASK-008-done-blocked.json",
+          "core-infrastructure/task-management/VAL-TASK-008-invalid-backlog-done.json",
+          "core-infrastructure/task-management/VAL-TASK-008-invalid-ready-review.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-009",
+      "title": "Update task fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "PATCH /api/tasks/:id with new title and description",
+          "expected": "200 with updated fields and updatedAt timestamp changed",
+          "observed": "200, title and description updated, updatedAt changed from 13:27:57 to 13:28:03"
+        }
+      ],
+      "evidence": {
+        "network": "PATCH /api/tasks/:id -> 200",
+        "responseFile": "core-infrastructure/task-management/VAL-TASK-009-update-fields.json"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TASK-010",
+      "title": "Delete task",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "DELETE /api/tasks/:id",
+          "expected": "204 no content, task removed",
+          "observed": "204 response"
+        },
+        {
+          "action": "GET /api/tasks/:id after deletion",
+          "expected": "404 task not found",
+          "observed": "404 - Task not found"
+        },
+        {
+          "action": "GET /api/logs?task_id=X after deletion",
+          "expected": "Cascade logs with deletion entry",
+          "observed": "Logs include 'created' and 'deleted' actions with final_state details"
+        }
+      ],
+      "evidence": {
+        "network": "DELETE /api/tasks/:id -> 204, GET deleted task -> 404",
+        "responseFiles": [
+          "core-infrastructure/task-management/VAL-TASK-010-logs-before.json",
+          "core-infrastructure/task-management/VAL-TASK-010-delete.json",
+          "core-infrastructure/task-management/VAL-TASK-010-verify-deleted.json",
+          "core-infrastructure/task-management/VAL-TASK-010-logs-after.json"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 7 assertions: 7 passed, 0 failed, 0 blocked. All task management API endpoints working as specified."
+}

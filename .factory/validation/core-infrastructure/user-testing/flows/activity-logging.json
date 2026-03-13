@@ -1,0 +1,135 @@
+{
+  "groupId": "activity-logging",
+  "testedAt": "2026-03-13T13:28:47.000Z",
+  "isolation": {
+    "apiBaseUrl": "http://localhost:3200",
+    "resourcePrefix": "val-log-",
+    "testProjectId": "3bbeeb0c-a890-4450-892d-51b82e0170a2",
+    "testTaskId": "961f39c0-0724-47e2-8348-c65cc03e07e3"
+  },
+  "toolsUsed": ["curl"],
+  "assertions": [
+    {
+      "id": "VAL-LOG-001",
+      "title": "Log task creation",
+      "status": "pass",
+      "steps": [
+        { "action": "POST /api/tasks with agentId, projectId, title, taskType", "expected": "Task created with 201 status", "observed": "Task created successfully with ID 9333212c-2f7c-4701-9f8c-67e8da0bfd7a" },
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Log entry with action='created' exists", "observed": "Log entry found with action='created', details containing title, project_id, task_type, initial_status" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST /api/tasks -> 201, GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-001-logs.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-002",
+      "title": "Log task claim",
+      "status": "pass",
+      "steps": [
+        { "action": "Create new task without agent", "expected": "Task created in backlog status", "observed": "Task 961f39c0-0724-47e2-8348-c65cc03e07e3 created" },
+        { "action": "POST /api/tasks/{id}/claim with agentId", "expected": "Task claimed, status changed to in_progress", "observed": "Task claimed by agent cccccccc-cccc-cccc-cccc-cccccccccccc" },
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Log entry with action='claimed' exists", "observed": "Log entry found with action='claimed', details containing agent_id and previous_status='backlog'" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST /api/tasks/{id}/claim -> 200, GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-002-logs.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-003",
+      "title": "Log task status change",
+      "status": "pass",
+      "steps": [
+        { "action": "PATCH /api/tasks/{id} with status='review'", "expected": "Task status updated to review", "observed": "Status updated from in_progress to review" },
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Log entry with action='updated' and field_changes array", "observed": "Log entry found with action='updated', details.field_changes containing field='status', old_value='in_progress', new_value='review'" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "PATCH /api/tasks/{id} -> 200, GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-003-logs.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-004",
+      "title": "List logs with filters",
+      "status": "pass",
+      "steps": [
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Returns only logs for specified task", "observed": "3 log entries returned for task 961f39c0-0724-47e2-8348-c65cc03e07e3" },
+        { "action": "GET /api/logs?agent_id={agentId}", "expected": "Returns only logs for specified agent", "observed": "2 log entries returned for agent cccccccc-cccc-cccc-cccc-cccccccccccc" },
+        { "action": "GET /api/logs?action=claimed", "expected": "Returns only claimed action logs", "observed": "2 log entries with action='claimed'" },
+        { "action": "GET /api/logs?project_id={projectId}", "expected": "Returns logs for tasks in specified project", "observed": "4 log entries for project 3bbeeb0c-a890-4450-892d-51b82e0170a2" },
+        { "action": "GET /api/logs?task_id={taskId}&action=claimed", "expected": "Returns combined filtered results", "observed": "1 log entry matching both filters" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "GET /api/logs with various filters -> 200",
+        "files": [
+          "core-infrastructure/activity-logging/VAL-LOG-004-filter-task.json",
+          "core-infrastructure/activity-logging/VAL-LOG-004-filter-agent.json",
+          "core-infrastructure/activity-logging/VAL-LOG-004-filter-action.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-005",
+      "title": "Log detail view",
+      "status": "pass",
+      "steps": [
+        { "action": "GET /api/logs for task with multiple actions", "expected": "Each action type has correct detail structure", "observed": "All action types have correct structure: created (title, project_id, task_type, initial_status), claimed (agent_id, previous_status), updated (field_changes array with field/old_value/new_value)" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-005-detail-structures.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-006",
+      "title": "Log task release",
+      "status": "pass",
+      "steps": [
+        { "action": "POST /api/tasks/{id}/release", "expected": "Task released, agent cleared, status set to ready", "observed": "Task released successfully" },
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Log entry with action='released' exists", "observed": "Log entry found with action='released', details containing agent_id and new_status='ready'" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST /api/tasks/{id}/release -> 200, GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-006-logs.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOG-007",
+      "title": "Log task deletion",
+      "status": "pass",
+      "steps": [
+        { "action": "DELETE /api/tasks/{id}", "expected": "Task deleted with 204 status", "observed": "Task deleted successfully, HTTP 204 returned" },
+        { "action": "GET /api/logs?task_id={taskId}", "expected": "Log entry with action='deleted' and final_state details", "observed": "Log entry found with action='deleted', details.final_state containing title, description, status, task_type, project_id, agent_id" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "DELETE /api/tasks/{id} -> 204, GET /api/logs -> 200",
+        "files": ["core-infrastructure/activity-logging/VAL-LOG-007-logs.json"]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 7 assertions: 7 passed, 0 failed, 0 blocked. All activity logging functionality works correctly. Task creation, claim, status update, release, and deletion all generate appropriate log entries with structured details. Log filtering by task_id, agent_id, action, and project_id works as expected."
+}
