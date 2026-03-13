@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { loadConfig, getConfigPath, updateConfig, validateAgentId, generateAgentId } from "./config";
+import { executeCreate } from "./commands/create";
 import { createInterface } from "node:readline";
 
 const program = new Command();
@@ -100,6 +101,24 @@ program
       console.error(chalk.red("Failed to update agent ID:"), error);
       process.exit(1);
     }
+  });
+
+// Create task command
+program
+  .command("create")
+  .description("Create a new task")
+  .requiredOption("--project <project-id>", "Project ID (UUID)")
+  .requiredOption("--title <title>", "Task title")
+  .requiredOption("--type <type>", "Task type (implementation, bugfix, feature, deployment, documentation, testing, research, other)")
+  .option("--description <description>", "Task description")
+  .action(async (options: { project: string; title: string; type: string; description?: string }) => {
+    const exitCode = await executeCreate({
+      project: options.project,
+      title: options.title,
+      type: options.type,
+      description: options.description,
+    });
+    process.exit(exitCode);
   });
 
 // Auto-initialize on first run - this runs when no command is specified
