@@ -1,0 +1,22 @@
+commands:
+  install: bun install
+  typecheck: bun run typecheck
+  build: bun run build
+  build:cli: bun run build:cli
+  test: bun test
+  lint: bun run lint
+
+services:
+  api:
+    start: PORT=3200 bun run dev:api
+    stop: lsof -ti :3200 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3200/api/health
+    port: 3200
+    depends_on: []
+
+  dashboard:
+    start: PORT=3201 bun run dev:dashboard
+    stop: lsof -ti :3201 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3201
+    port: 3201
+    depends_on: [api]
