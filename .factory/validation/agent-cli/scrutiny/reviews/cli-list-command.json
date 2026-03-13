@@ -1,0 +1,39 @@
+{
+  "featureId": "cli-list-command",
+  "reviewedAt": "2026-03-13T23:45:00.000Z",
+  "commitId": "5fa1812",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly delivers both 'mission list' and 'mission projects' commands. The code is well-structured, follows project conventions (Commander.js, chalk, exit codes), and has been subsequently improved by later features (timeout wrapping via errors.ts, shared error formatting). Tests cover command registration, option parsing, output formatting, and validation edge cases. The feature fully satisfies its description and expectedBehavior.",
+    "issues": [
+      {
+        "file": "cli/tests/list.test.ts",
+        "line": 86,
+        "severity": "non_blocking",
+        "description": "listTasks signature tests only verify that calling the function with various argument shapes doesn't throw synchronously — but they don't actually call the async function or mock fetch, so they don't verify network behavior. This is a minor coverage gap but acceptable for unit-level tests given the manual integration testing done."
+      },
+      {
+        "file": "cli/src/commands/list.ts",
+        "line": 30,
+        "severity": "suggestion",
+        "description": "VALID_STATUSES array duplicates the TASK_STATUSES constant now exported from client.ts. Could import and reuse TASK_STATUSES from client.ts to keep the single source of truth. Minor duplication, not a bug."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The VALID_STATUSES array in cli/src/commands/list.ts duplicates the TASK_STATUSES constant in cli/src/client.ts. While not a bug, establishing a convention to import shared constants would reduce drift risk.",
+      "evidence": "cli/src/commands/list.ts:30 defines VALID_STATUSES locally, while cli/src/client.ts:14 exports TASK_STATUSES with the same values."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker followed the cli-worker skill procedure correctly: read mission docs, explored existing code, ran baseline tests, wrote tests first (TDD RED/GREEN), ran all validators, and committed. skillFeedback.followedProcedure is true with no deviations.",
+      "evidence": "Transcript skeleton shows systematic approach: skill activation → read mission/validation/features → read existing CLI code → baseline test → create test file (RED) → implement (GREEN) → verify all tests → typecheck → lint → build → manual integration testing."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The cli-list-command feature is well-implemented and passes review. Both 'mission list' (with --project and --status filters) and 'mission projects' commands work correctly with readable table output, colored status/type indicators, proper validation, and clear error messages. 15 unit tests cover command registration, option parsing, output formatting, empty states, and validation errors. Manual integration testing confirmed correct API interaction. The code was subsequently improved by the cli-help-error-handling feature (shared error formatting via errors.ts, timeout wrapping). Two minor non-blocking observations: test coverage for async listTasks could be deeper, and VALID_STATUSES duplicates TASK_STATUSES from client.ts. Overall, the feature fully satisfies its description and expectedBehavior requirements."
+}

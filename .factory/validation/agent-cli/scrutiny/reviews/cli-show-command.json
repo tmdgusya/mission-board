@@ -1,0 +1,44 @@
+{
+  "featureId": "cli-show-command",
+  "reviewedAt": "2026-03-13T23:45:00.000Z",
+  "commitId": "4a68a2a",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of the `mission show <task_id>` command. Displays all required fields (title, description, status, agent name, project name, task type, created_at, updated_at, claimed_at). Agent and project names are resolved via separate API calls with graceful fallback to IDs on failure. Output is well-formatted with chalk colors, human-readable dates, and a bordered title header. Error handling covers invalid UUID format, 404 not-found, and API connection failures. The subsequent commit (e9efd31) properly refactored the error formatting into a shared module and added timeout wrappers to all API client methods including the new getTask/getAgent/getProject. All 14 tests pass covering command parsing, API client exports, output formatting, and error handling.",
+    "issues": [
+      {
+        "file": "cli/tests/show.test.ts",
+        "line": 114,
+        "severity": "non_blocking",
+        "description": "The 'getTask should accept taskId parameter' test only verifies the function doesn't throw when called with a UUID string — it doesn't actually invoke the function (it's wrapped in expect().not.toThrow() without await). This means the test would pass even if getTask threw asynchronously. The function returns a Promise, so without awaiting, this test only checks synchronous argument parsing. However, this is a minor issue since the integration test with the live API server verified the actual API call works."
+      },
+      {
+        "file": "cli/tests/show.test.ts",
+        "line": 200,
+        "severity": "non_blocking",
+        "description": "formatShowError test 'should format API errors with clear messages' only checks that the result contains 'Error' — it doesn't verify the specific message content. A more specific assertion (e.g., checking for 'Unable to connect' or 'Connection refused') would be more robust."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "All CLI commands have been refactored (in commit e9efd31) to use a shared formatError() utility from cli/src/errors.ts instead of command-specific error formatting. The show command's original formatShowError now delegates to the shared formatter. This pattern should be documented in AGENTS.md for future CLI workers — all new commands should use formatError() from errors.ts, not implement their own error formatting.",
+      "evidence": "cli/src/commands/show.ts:135-139 — formatShowError delegates to formatError. cli/src/errors.ts — shared formatError module. The subsequent cli-help-error-handling commit refactored all commands to use this pattern."
+    },
+    {
+      "area": "conventions",
+      "observation": "All API client methods in cli/src/client.ts now use withTimeout() from errors.ts for request timeouts (30s default). New API client methods added by future workers must follow this pattern rather than making bare fetch calls.",
+      "evidence": "cli/src/client.ts — every exported API function (getTask, getAgent, getProject, createTask, listTasks, etc.) wraps fetch() with withTimeout(). Original commit 4a68a2a added these without withTimeout, but e9efd31 fixed this."
+    },
+    {
+      "area": "conventions",
+      "observation": "CLI tests have a pre-existing ENOENT issue: the config module attempts to read ~/.mission-board/config.json during import, causing an unhandled error between tests. This causes bun test to exit with code 1 even when all tests pass. Workers should be aware of this known issue and not treat exit code 1 as a test failure when all individual tests show 'pass'.",
+      "evidence": "bun test cli/tests/show.test.ts output shows '1 error' (ENOENT) but '14 pass, 0 fail'. Handoff from worker notes: 'Exit code 1 due to pre-existing unhandled ENOENT error from config module (same pattern as all other CLI test files).'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The `cli-show-command` feature is well-implemented and meets all expected behavior requirements from VAL-CLI-010. The command displays all required task fields with human-readable agent names, project names, and formatted dates. Error handling is thorough with UUID validation, 404 handling, and connection failure messages. Test coverage is good with 14 tests covering command registration, API client exports, output formatting (including edge cases like null description and unclaimed tasks), and error scenarios. Two minor non-blocking test quality issues were noted. The implementation follows existing CLI patterns and was properly refactored in the subsequent help/error-handling commit to use shared error formatting and timeout utilities. Status: PASS."
+}

@@ -1,0 +1,44 @@
+{
+  "featureId": "cli-create-command",
+  "reviewedAt": "2026-03-13T14:45:00.000Z",
+  "commitId": "578cbd3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation is solid and fully meets the feature requirements. The create command accepts --project, --title, --type, and optional --description flags, calls POST /api/tasks, displays a success message with the task ID, and handles errors with clear messages and non-zero exit codes. The code is well-structured with separation between API client (client.ts), command logic (commands/create.ts), and CLI registration (index.ts). Tests cover command parsing, option validation, success formatting, and error handling. The later cli-help-error-handling commit refactored formatApiError to delegate to a shared errors.ts module and added request timeouts, which are good improvements built on this foundation.",
+    "issues": [
+      {
+        "file": "cli/tests/create.test.ts",
+        "line": 55,
+        "severity": "non_blocking",
+        "description": "Test 'createTask should accept correct parameters' only checks that calling createTask() doesn't throw synchronously — it does not await the returned Promise, so it doesn't verify the function actually communicates with the API. This is a minor gap in test coverage; the actual API integration was verified manually during the worker session."
+      },
+      {
+        "file": "cli/src/commands/create.ts",
+        "line": 83,
+        "severity": "suggestion",
+        "description": "The isValidUUID function is duplicated in the CLI command. The API server in src/api/routes/tasks.ts also has its own UUID_REGEX. Consider centralizing UUID validation if other CLI commands also need it (though currently acceptable for a single use)."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The cli-worker skill says to test with 'mocked server' for API client integration tests, but the actual tests only test function exports and formatting without any mocking. The worker relied on manual testing with a live API server instead. This suggests the skill's guidance on mocked integration tests may be aspirational rather than expected, or the skill could be updated to reflect the actual testing pattern used.",
+      "evidence": "Transcript shows the worker started the API server manually (PORT=3200 bun run src/server.ts) and tested via ./dist/mission commands. No mocking library (e.g., msw, nock) was used in tests. The skill SKILL.md step 1 says 'API client integration tests (mocked server)' but the worker created only unit-level tests."
+    },
+    {
+      "area": "conventions",
+      "observation": "The API createTask endpoint accepts an optional agentId field (from createTaskSchema), but the CLI createTask function does not send agentId in the payload. Tasks are created without agent assignment and start in 'backlog' status. This is a design choice that could be documented — agents claim tasks after creation, not during creation.",
+      "evidence": "cli/src/client.ts createTask() sends {projectId, title, description, taskType, requiresApproval} without agentId. src/schemas/tasks.ts createTaskSchema has agentId as optional. The feature description says 'calls POST /api/tasks' without specifying agentId."
+    },
+    {
+      "area": "conventions",
+      "observation": "Error formatting was initially implemented inline in commands/create.ts (formatApiError) but was later refactored to a shared cli/src/errors.ts module by the cli-help-error-handling feature. This pattern of extracting shared utilities after initial implementation is a common workflow that could be noted as a convention.",
+      "evidence": "Original commit 578cbd3 has formatApiError in commands/create.ts. Later commit e9efd31 replaces it with 'export const formatApiError = formatError' delegating to cli/src/errors.ts."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The cli-create-command feature is well-implemented and passes review. It creates tasks via POST /api/tasks with proper input validation (UUID format for project ID, valid task type enum), displays success messages with the created task ID, handles API errors with clear formatted messages, and uses correct exit codes (0 for success, 1 for errors). Tests cover command registration, option parsing, success formatting, and error handling across 9 test cases. Two non-blocking observations: one test doesn't actually verify async API behavior, and UUID validation could be centralized. The implementation was later enhanced by the cli-help-error-handling feature which added shared error formatting and request timeouts. Overall, the feature fully satisfies VAL-CLI-003 and all expected behaviors from the feature description."
+}

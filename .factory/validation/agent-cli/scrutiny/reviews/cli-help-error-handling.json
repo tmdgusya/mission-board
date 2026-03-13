@@ -1,0 +1,50 @@
+{
+  "featureId": "cli-help-error-handling",
+  "reviewedAt": "2026-03-13T14:45:00.000Z",
+  "commitId": "e9efd31",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of comprehensive help text for all 10 CLI commands and a shared error formatting utility. The refactoring eliminates duplicated error-handling code across 5 command files by centralizing it in cli/src/errors.ts. The withTimeout wrapper adds timeout support to all fetch calls. 19 new tests cover both VAL-CLI-001 (help) and VAL-CLI-008 (error handling) assertions. All 96 tests pass, typecheck passes, binary compiles successfully.",
+    "issues": [
+      {
+        "file": "cli/src/errors.ts",
+        "line": 197,
+        "severity": "non_blocking",
+        "description": "withTimeout() creates an AbortController but never passes controller.signal to the fetch call. The AbortController only drives the Promise.race rejection — the underlying fetch request continues running in the background after timeout. To properly abort the HTTP request, the signal should be passed into the fetch options. Currently this means: (a) timeout will reject the promise correctly from the caller's perspective, but (b) the TCP connection stays open until the OS reaps it. Functional impact is low since the CLI exits after error, but it is a resource leak concern in principle."
+      },
+      {
+        "file": "cli/src/commands/list.ts",
+        "line": 118,
+        "severity": "suggestion",
+        "description": "formatListError and formatProjectsError are trivial one-line wrappers around formatError. While noted as 'backward compatibility', nothing in the codebase imports them externally. These could be removed in a future cleanup pass."
+      },
+      {
+        "file": "cli/src/commands/claim.ts",
+        "line": 17,
+        "severity": "suggestion",
+        "description": "formatClaimError is exported as a const alias (= formatError). Same backward-compat note as list.ts — nothing external imports it."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "CLI error handling pattern is now well-established: all errors go through formatError() from errors.ts, exit code 1 on error. This pattern is consistently followed across all 5 command files. AGENTS.md already documents 'Exit codes: 0 success, 1 error' for CLI conventions — this is consistent.",
+      "evidence": "cli/src/errors.ts exports formatError(); all command files (create.ts, claim.ts, list.ts, update.ts, release.ts, show.ts) import and use it"
+    },
+    {
+      "area": "conventions",
+      "observation": "The CLI uses a shared timeout wrapper (withTimeout) for all API calls. This is a pattern worth documenting in AGENTS.md or library/ for future CLI workers so they know to wrap any new API calls the same way.",
+      "evidence": "cli/src/client.ts wraps all 8 fetch() calls with withTimeout(fetch(...), API_TIMEOUT_MS); cli/src/errors.ts exports withTimeout and API_TIMEOUT_MS"
+    },
+    {
+      "area": "services",
+      "observation": "No new services or commands were added that need to be in services.yaml. The CLI binary build command (build:cli) is already documented in services.yaml commands.",
+      "evidence": "services.yaml already has 'build:cli: bun run build:cli' in commands section"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature cli-help-error-handling is complete and well-implemented. All 10 CLI commands have detailed help text with usage examples and cross-references. A centralized error formatting utility (errors.ts) handles API errors (400/404/409/500), network connectivity failures, and timeouts with clear, actionable messages. All fetch calls have a 30s timeout wrapper. Global uncaught exception/rejection handlers are registered at startup. 19 new tests cover both VAL-CLI-001 and VAL-CLI-008 assertions. One non-blocking issue: withTimeout() doesn't pass the AbortSignal to fetch, so network connections aren't actually cancelled on timeout (the caller still gets the timeout error correctly, but the underlying TCP connection persists). This is a minor resource leak that doesn't affect CLI functionality since the process exits on error. Status: PASS."
+}
