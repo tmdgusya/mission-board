@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { projectsRouter } from "./api/routes/projects";
 import { tasksRouter } from "./api/routes/tasks";
+import { agentsRouter } from "./api/routes/agents";
 
 const app = new Hono();
 
@@ -24,6 +25,9 @@ app.route("/api/projects", projectsRouter);
 
 // Mount task routes
 app.route("/api/tasks", tasksRouter);
+
+// Mount agent routes
+app.route("/api/agents", agentsRouter);
 
 // Global error handler
 app.onError((err, c) => {
