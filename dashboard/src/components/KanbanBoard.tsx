@@ -27,6 +27,7 @@ interface KanbanBoardProps {
   isLoading: boolean;
   error: Error | null;
   onRetry: () => void;
+  onTaskClick?: (taskId: string) => void;
 }
 
 export function KanbanBoard({
@@ -34,6 +35,7 @@ export function KanbanBoard({
   isLoading,
   error: tasksError,
   onRetry: refetchTasks,
+  onTaskClick,
 }: KanbanBoardProps): React.ReactElement {
   const { data: healthData, error: healthError, refetch: refetchHealth } = useApiHealth();
   const updateTask = useUpdateTask();
@@ -234,6 +236,7 @@ export function KanbanBoard({
               status={status}
               tasks={tasksByStatus.get(status) ?? []}
               activeTaskId={activeTask?.id ?? null}
+              onTaskClick={onTaskClick}
             />
           ))}
         </div>

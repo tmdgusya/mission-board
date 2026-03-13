@@ -8,12 +8,14 @@ interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
   activeTaskId: string | null;
+  onTaskClick?: (taskId: string) => void;
 }
 
 export function KanbanColumn({
   status,
   tasks,
   activeTaskId,
+  onTaskClick,
 }: KanbanColumnProps): React.ReactElement {
   const { isOver, setNodeRef } = useDroppable({
     id: `column-${status}`,
@@ -80,6 +82,7 @@ export function KanbanColumn({
               key={task.id}
               task={task}
               isDragging={task.id === activeTaskId}
+              onTaskClick={onTaskClick}
             />
           ))
         )}

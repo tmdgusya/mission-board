@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useTasks } from "../hooks/use-tasks";
 import { KanbanBoard } from "./KanbanBoard";
 import {
@@ -8,9 +8,12 @@ import {
   applyClientFilters,
   type FilterState,
 } from "./Filters";
+import { TaskDetail } from "./TaskDetail";
 
 export function DashboardContent(): React.ReactElement {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
   const apiParams = useMemo(() => buildApiParams(filters), [filters]);
   const {
     data: tasks = [],
@@ -24,6 +27,14 @@ export function DashboardContent(): React.ReactElement {
     [tasks, filters]
   );
 
+  const handleTaskClick = useCallback((taskId: string) => {
+    setSelectedTaskId(taskId);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedTaskId(null);
+  }, []);
+
   return (
     <div style={{ padding: "24px", maxWidth: "100%" }}>
       <Filters
@@ -36,7 +47,9 @@ export function DashboardContent(): React.ReactElement {
         isLoading={isLoading}
         error={tasksError}
         onRetry={refetchTasks}
+        onTaskClick={handleTaskClick}
       />
+      <TaskDetail taskId={selectedTaskId} onClose={handleCloseDetail} />
     </div>
   );
 }

@@ -8,9 +8,10 @@ import { useAgents } from "../hooks/use-agents";
 interface TaskCardProps {
   task: Task;
   isDragging?: boolean;
+  onTaskClick?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, isDragging }: TaskCardProps): React.ReactElement {
+export function TaskCard({ task, isDragging, onTaskClick }: TaskCardProps): React.ReactElement {
   const { attributes, listeners, setNodeRef, transform, isDragging: isDragActive } =
     useDraggable({
       id: task.id,
@@ -19,6 +20,12 @@ export function TaskCard({ task, isDragging }: TaskCardProps): React.ReactElemen
 
   const { data: agents } = useAgents();
   const agent = agents?.find((a) => a.id === task.agentId);
+
+  const handleClick = (): void => {
+    if (onTaskClick && !isDragActive) {
+      onTaskClick(task.id);
+    }
+  };
 
   const style: React.CSSProperties = {
     backgroundColor: isDragActive || isDragging ? "#334155" : "#1e293b",
@@ -35,7 +42,14 @@ export function TaskCard({ task, isDragging }: TaskCardProps): React.ReactElemen
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes} data-testid={`task-card-${task.id}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      data-testid={`task-card-${task.id}`}
+    >
       <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "8px" }}>
         {task.title}
       </div>
