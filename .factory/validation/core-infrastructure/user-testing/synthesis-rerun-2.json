@@ -1,0 +1,25 @@
+{
+  "milestone": "core-infrastructure",
+  "round": 2,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-AGENT-007"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "validation-state.json",
+      "description": "Updated VAL-AGENT-007 status from failed to passed after re-testing",
+      "source": "re-run validation"
+    }
+  ],
+  "previousRound": ".factory/validation/core-infrastructure/user-testing/synthesis.json",
+  "notes": "Re-run after initial validation failure. VAL-AGENT-007 was originally marked as failed due to a misinterpretation of the validation contract. The contract states 'No 400 error for new agent_ids - they are created on first use', which means auto-registration is the EXPECTED behavior, not a deviation from the contract. The implementation correctly auto-registers agents when API operations receive new agent_ids."
+}
