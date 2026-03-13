@@ -138,6 +138,24 @@ Testing surface, validation approach, and resource constraints for the mission b
 - API uses camelCase: agentId, projectId, taskType, createdAt, updatedAt
 - Task types: implementation, bugfix, feature, deployment, documentation, testing, research, other
 
+### Drag-and-Drop Testing
+- dnd-kit's PointerSensor requires a 5px activation distance before recognizing drag
+- agent-browser's built-in `drag @source @target` command works reliably (handles activation)
+- Manual mouse operations (mouse_down/mouse_move/mouse_up) do NOT reliably trigger dnd-kit
+- Toast messages auto-dismiss after 4 seconds — chain drag + screenshot/eval in same command to capture
+
+### Loading/Error State Testing
+- Loading state is too brief to capture with local API (<100ms response time)
+  - Use agent-browser `network route --delay 5000` to slow API responses for capture
+- Error state requires clearing React Query cache before testing
+  - Navigate to `about:blank`, set network abort routes on API endpoints, then navigate to dashboard
+  - Simply aborting routes on an already-loaded page won't trigger error (cached data served)
+
+### Concurrency Notes
+- Concurrent validators that modify the database can interfere with each other's test data
+- For read-only validators: this causes reduced data but assertions still testable
+- For mutating validators: use unique resource prefixes (e.g., "VAL-DASH-007-", "Drag test -")
+
 ### Evidence Collection
 - Save screenshots for each assertion
 - Note any console errors

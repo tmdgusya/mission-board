@@ -26,34 +26,56 @@
   ],
   "failedAssertions": [],
   "blockedAssertions": [],
-  "appliedUpdates": [],
   "flowReports": [
-    ".factory/validation/dashboard/user-testing/flows/read-filter-detail.json",
-    ".factory/validation/dashboard/user-testing/flows/states-responsive.json",
-    ".factory/validation/dashboard/user-testing/flows/drag-create-realtime.json"
+    "board-layout-cards.json",
+    "filters-search.json",
+    "task-detail-create.json",
+    "drag-drop.json",
+    "states-responsive.json",
+    "real-time-updates.json"
   ],
-  "evidenceDirs": [
-    "evidence/dashboard/read-filter-detail/",
-    "evidence/dashboard/states-responsive/",
-    "evidence/dashboard/drag-create-realtime/"
-  ],
-  "testGroups": [
+  "appliedUpdates": [
     {
-      "groupId": "read-filter-detail",
-      "assertions": ["VAL-DASH-001", "VAL-DASH-002", "VAL-DASH-004", "VAL-DASH-005", "VAL-DASH-006", "VAL-DASH-008", "VAL-DASH-010"],
-      "results": "7/7 passed"
+      "target": "user-testing.md",
+      "description": "Added 'Flow Validator Guidance: Dashboard' section with isolation rules, seeded data reference, API field naming convention (camelCase), and task type enum values",
+      "source": "setup"
     },
     {
-      "groupId": "states-responsive",
-      "assertions": ["VAL-DASH-009", "VAL-DASH-011", "VAL-DASH-012"],
-      "results": "3/3 passed"
+      "target": "user-testing.md",
+      "description": "Documented that agent-browser built-in 'drag' command works reliably with dnd-kit (vs manual mouse operations which don't trigger PointerSensor)",
+      "source": "flow-report"
     },
     {
-      "groupId": "drag-create-realtime",
-      "assertions": ["VAL-DASH-003", "VAL-DASH-007", "VAL-DASH-013", "VAL-DASH-014"],
-      "results": "4/4 passed"
+      "target": "user-testing.md",
+      "description": "Documented that loading state capture requires network delay simulation (API responds too fast locally) and error state capture requires clearing React Query cache via about:blank navigation",
+      "source": "flow-report"
     }
   ],
-  "previousRound": null,
-  "summary": "All 14 dashboard assertions passed across 3 parallel flow validator subagents. Kanban board loads with 6 columns, task cards display correctly, drag-drop works (valid and invalid transitions), filters (project/status/agent/search) function independently and together, task detail view shows comprehensive info, real-time polling picks up API changes within 5s, loading/empty/error states display appropriate UI, responsive design works on mobile, and task creation form works end-to-end."
+  "frictions": [
+    {
+      "description": "Duplicate project names in database cause ambiguous dropdown options (minor, pre-existing data issue)",
+      "resolved": true
+    },
+    {
+      "description": "Concurrent validators modifying shared database state during testing caused some validators to have reduced test data",
+      "resolved": true,
+      "resolution": "Validators adapted by creating their own test data or testing with empty results"
+    },
+    {
+      "description": "Agent filter dropdown shows raw UUIDs instead of human-readable agent names (UX improvement suggestion)",
+      "resolved": false,
+      "suggestion": "Consider mapping agent IDs to names in the filter dropdown display"
+    },
+    {
+      "description": "Toast messages auto-dismiss after 4 seconds, requiring chained screenshot/eval commands",
+      "resolved": true,
+      "resolution": "Chained drag command with eval/screenshot in same shell invocation"
+    },
+    {
+      "description": "dnd-kit PointerSensor requires 5px activation distance; manual mouse operations don't work; must use agent-browser built-in drag command",
+      "resolved": true,
+      "resolution": "Used agent-browser's built-in drag command"
+    }
+  ],
+  "previousRound": null
 }
