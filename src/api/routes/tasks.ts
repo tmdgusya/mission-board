@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { db } from "../../db/connection";
 import { tasks, taskLogs, projects, agents } from "../../db/schema";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -10,6 +11,14 @@ import {
   getInvalidTransitionMessage,
   TASK_STATUSES,
 } from "../../schemas/tasks";
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Schema for claiming a task
+const claimTaskSchema = z.object({
+  agentId: z.string().regex(UUID_REGEX, "Invalid agent ID format"),
+});
 
 const tasksRouter = new Hono();
 
@@ -304,6 +313,182 @@ tasksRouter.delete("/:id", async (c) => {
     return c.body(null, 204);
   } catch (error) {
     console.error("Error deleting task:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/tasks/:id/claim - Claim a task
+// Sets agent_id, claimed_at, transitions status to in_progress from backlog/ready
+// Returns 409 if already claimed
+tasksRouter.post("/:id/claim", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    // Validate UUID format
+    const idValidation = taskIdSchema.safeParse(id);
+    if (!idValidation.success) {
+      return c.json({ error: "Invalid UUID format" }, 400);
+    }
+
+    const body = await c.req.json();
+
+    // Validate input
+    const validationResult = claimTaskSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json(
+        {
+          error: "Validation failed",
+          details: validationResult.error.issues,
+        },
+        400
+      );
+    }
+
+    const { agentId } = validationResult.data;
+
+    // Check if agent exists
+    const agentResult = await db.select().from(agents).where(eq(agents.id, agentId));
+    if (agentResult.length === 0) {
+      return c.json({ error: "Agent not found" }, 400);
+    }
+
+    // Check if task exists
+    const existingTaskResult = await db.select().from(tasks).where(eq(tasks.id, id));
+    if (existingTaskResult.length === 0) {
+      return c.json({ error: "Task not found" }, 404);
+    }
+
+    const existingTask = existingTaskResult[0]!;
+
+    // Check if task is already claimed by another agent
+    if (existingTask.agentId && existingTask.agentId !== agentId) {
+      // Safely format claimedAt date
+      let claimedAtStr: string | null = null;
+      if (existingTask.claimedAt) {
+        try {
+          const date = existingTask.claimedAt instanceof Date 
+            ? existingTask.claimedAt 
+            : new Date(existingTask.claimedAt);
+          if (!isNaN(date.getTime())) {
+            claimedAtStr = date.toISOString();
+          }
+        } catch {
+          claimedAtStr = null;
+        }
+      }
+
+      return c.json(
+        {
+          error: `Task is already claimed by another agent`,
+          currentOwner: {
+            agentId: existingTask.agentId,
+            claimedAt: claimedAtStr,
+          },
+        },
+        409
+      );
+    }
+
+    // Check if task can be claimed (only from backlog or ready status)
+    const claimableStatuses = ["backlog", "ready"];
+    if (!claimableStatuses.includes(existingTask.status)) {
+      return c.json(
+        {
+          error: `Cannot claim task in "${existingTask.status}" status. Task can only be claimed from: ${claimableStatuses.join(", ")}`,
+        },
+        400
+      );
+    }
+
+    const now = new Date();
+
+    // Update task: set agent_id, claimed_at, status to in_progress
+    await db
+      .update(tasks)
+      .set({
+        agentId,
+        claimedAt: now,
+        status: "in_progress",
+        updatedAt: now,
+      })
+      .where(eq(tasks.id, id));
+
+    // Fetch updated task
+    const result = await db.select().from(tasks).where(eq(tasks.id, id));
+    const task = result[0]!;
+
+    return c.json({
+      id: task.id,
+      projectId: task.projectId,
+      agentId: task.agentId,
+      title: task.title,
+      description: task.description,
+      taskType: task.taskType,
+      requiresApproval: task.requiresApproval,
+      status: task.status,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+      claimedAt: task.claimedAt,
+    });
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+    console.error("Error claiming task:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/tasks/:id/release - Release a claimed task
+// Clears agent_id, claimed_at, sets status to ready
+tasksRouter.post("/:id/release", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    // Validate UUID format
+    const idValidation = taskIdSchema.safeParse(id);
+    if (!idValidation.success) {
+      return c.json({ error: "Invalid UUID format" }, 400);
+    }
+
+    // Check if task exists
+    const existingTaskResult = await db.select().from(tasks).where(eq(tasks.id, id));
+    if (existingTaskResult.length === 0) {
+      return c.json({ error: "Task not found" }, 404);
+    }
+
+    const now = new Date();
+
+    // Update task: clear agent_id, claimed_at, set status to ready
+    await db
+      .update(tasks)
+      .set({
+        agentId: null,
+        claimedAt: null,
+        status: "ready",
+        updatedAt: now,
+      })
+      .where(eq(tasks.id, id));
+
+    // Fetch updated task
+    const result = await db.select().from(tasks).where(eq(tasks.id, id));
+    const task = result[0]!;
+
+    return c.json({
+      id: task.id,
+      projectId: task.projectId,
+      agentId: task.agentId,
+      title: task.title,
+      description: task.description,
+      taskType: task.taskType,
+      requiresApproval: task.requiresApproval,
+      status: task.status,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+      claimedAt: task.claimedAt,
+    });
+  } catch (error) {
+    console.error("Error releasing task:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
