@@ -11,8 +11,8 @@ describe("Database Schema", () => {
   });
 
   afterAll(() => {
-    // Close database connection
-    sqlite.close();
+    // Don't close the database connection - other tests may need it
+    // sqlite.close();
   });
 
   describe("Database Configuration", () => {
