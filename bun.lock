@@ -6,6 +6,8 @@
       "name": "mission-board",
       "dependencies": {
         "better-sqlite3": "^12.6.2",
+        "chalk": "^5.6.2",
+        "commander": "^14.0.3",
         "drizzle-orm": "^0.45.1",
         "hono": "^4.12.7",
         "zod": "^4.3.6",
@@ -13,6 +15,7 @@
       "devDependencies": {
         "@types/better-sqlite3": "^7.6.13",
         "@types/bun": "latest",
+        "@types/node": "^25.5.0",
         "drizzle-kit": "^0.31.9",
         "vitest": "^4.1.0",
       },
@@ -174,7 +177,11 @@
 
     "chai": ["chai@6.2.2", "", {}, "sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg=="],
 
+    "chalk": ["chalk@5.6.2", "", {}, "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="],
+
     "chownr": ["chownr@1.1.4", "", {}, "sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg=="],
+
+    "commander": ["commander@14.0.3", "", {}, "sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw=="],
 
     "convert-source-map": ["convert-source-map@2.0.0", "", {}, "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="],
 
