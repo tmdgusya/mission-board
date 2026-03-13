@@ -50,11 +50,11 @@ export const tasks = sqliteTable("tasks", {
 });
 
 // Task logs table
+// Note: task_id is not a foreign key to allow logs to persist after task deletion
+// This is important for audit trails
 export const taskLogs = sqliteTable("task_logs", {
   id: text("id").primaryKey(),
-  taskId: text("task_id")
-    .notNull()
-    .references(() => tasks.id, { onDelete: "cascade" }),
+  taskId: text("task_id"), // Not a foreign key - allows logs to persist after task deletion
   agentId: text("agent_id").references(() => agents.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   details: text("details"), // JSON stored as text

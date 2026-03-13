@@ -12,6 +12,13 @@ import {
   TASK_STATUSES,
 } from "../../schemas/tasks";
 import { ensureAgentExists, updateAgentLastSeen } from "../../services/agents";
+import {
+  logTaskCreated,
+  logTaskClaimed,
+  logTaskReleased,
+  logTaskUpdated,
+  logTaskDeleted,
+} from "../../services/taskLogs";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -82,6 +89,14 @@ tasksRouter.post("/", async (c) => {
     if (result.length === 0) {
       return c.json({ error: "Failed to create task" }, 500);
     }
+
+    // Log task creation
+    await logTaskCreated(taskId, agentId || null, {
+      title,
+      projectId,
+      taskType,
+      status: "backlog",
+    });
 
     const task = result[0]!;
     return c.json(
@@ -246,6 +261,9 @@ tasksRouter.patch("/:id", async (c) => {
       }
     }
 
+    // Track field changes for logging
+    const fieldChanges: Array<{ field: string; old_value: unknown; new_value: unknown }> = [];
+
     // Prepare update values
     const updateValues: Partial<{
       title: string;
@@ -256,18 +274,38 @@ tasksRouter.patch("/:id", async (c) => {
       updatedAt: new Date(),
     };
 
-    if (updates.title !== undefined) {
+    if (updates.title !== undefined && updates.title !== existingTask.title) {
       updateValues.title = updates.title;
+      fieldChanges.push({
+        field: "title",
+        old_value: existingTask.title,
+        new_value: updates.title,
+      });
     }
-    if (updates.description !== undefined) {
+    if (updates.description !== undefined && updates.description !== existingTask.description) {
       updateValues.description = updates.description;
+      fieldChanges.push({
+        field: "description",
+        old_value: existingTask.description,
+        new_value: updates.description,
+      });
     }
-    if (updates.status !== undefined) {
+    if (updates.status !== undefined && updates.status !== existingTask.status) {
       updateValues.status = updates.status;
+      fieldChanges.push({
+        field: "status",
+        old_value: existingTask.status,
+        new_value: updates.status,
+      });
     }
 
     // Update task
     await db.update(tasks).set(updateValues).where(eq(tasks.id, id));
+
+    // Log task update if there were changes
+    if (fieldChanges.length > 0) {
+      await logTaskUpdated(id, existingTask.agentId, fieldChanges);
+    }
 
     // Fetch updated task
     const result = await db.select().from(tasks).where(eq(tasks.id, id));
@@ -307,13 +345,25 @@ tasksRouter.delete("/:id", async (c) => {
     }
 
     // Check if task exists
-    const existingTask = await db.select().from(tasks).where(eq(tasks.id, id));
+    const existingTaskResult = await db.select().from(tasks).where(eq(tasks.id, id));
 
-    if (existingTask.length === 0) {
+    if (existingTaskResult.length === 0) {
       return c.json({ error: "Task not found" }, 404);
     }
 
-    // Delete task (cascade will handle related logs)
+    const existingTask = existingTaskResult[0]!;
+
+    // Log task deletion before deleting (need to capture final state)
+    await logTaskDeleted(id, existingTask.agentId, {
+      title: existingTask.title,
+      description: existingTask.description,
+      status: existingTask.status,
+      taskType: existingTask.taskType,
+      projectId: existingTask.projectId,
+      agentId: existingTask.agentId,
+    });
+
+    // Delete task (cascade will handle related logs, but the deleted log remains)
     await db.delete(tasks).where(eq(tasks.id, id));
 
     return c.body(null, 204);
@@ -404,6 +454,7 @@ tasksRouter.post("/:id/claim", async (c) => {
     }
 
     const now = new Date();
+    const previousStatus = existingTask.status;
 
     // Update task: set agent_id, claimed_at, status to in_progress
     await db
@@ -415,6 +466,9 @@ tasksRouter.post("/:id/claim", async (c) => {
         updatedAt: now,
       })
       .where(eq(tasks.id, id));
+
+    // Log task claim
+    await logTaskClaimed(id, agentId, previousStatus);
 
     // Fetch updated task
     const result = await db.select().from(tasks).where(eq(tasks.id, id));
@@ -460,7 +514,9 @@ tasksRouter.post("/:id/release", async (c) => {
       return c.json({ error: "Task not found" }, 404);
     }
 
+    const existingTask = existingTaskResult[0]!;
     const now = new Date();
+    const releasingAgentId = existingTask.agentId;
 
     // Update task: clear agent_id, claimed_at, set status to ready
     await db
@@ -472,6 +528,9 @@ tasksRouter.post("/:id/release", async (c) => {
         updatedAt: now,
       })
       .where(eq(tasks.id, id));
+
+    // Log task release
+    await logTaskReleased(id, releasingAgentId, "ready");
 
     // Fetch updated task
     const result = await db.select().from(tasks).where(eq(tasks.id, id));

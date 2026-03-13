@@ -395,9 +395,11 @@ describe("Project CRUD API", () => {
 
       expect(response.status).toBe(204);
 
-      // Verify log is also deleted
+      // Verify log still exists (logs are kept for audit purposes)
+      // The task_id remains since there's no foreign key constraint
       const logResult = await db.select().from(taskLogs).where(eq(taskLogs.id, logId));
-      expect(logResult.length).toBe(0);
+      expect(logResult.length).toBe(1);
+      expect(logResult[0]!.taskId).toBe(taskId);
     });
 
     it("should cascade delete associated approval requests", async () => {

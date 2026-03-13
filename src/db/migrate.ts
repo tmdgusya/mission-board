@@ -45,15 +45,16 @@ function migrate() {
   `);
 
   // Create task_logs table
+  // Note: task_id is not a foreign key to allow logs to persist after task deletion
+  // This is important for audit trails
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS task_logs (
       id TEXT PRIMARY KEY,
-      task_id TEXT NOT NULL,
+      task_id TEXT,
       agent_id TEXT,
       action TEXT NOT NULL,
       details TEXT,
       created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-      FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
       FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
     );
   `);

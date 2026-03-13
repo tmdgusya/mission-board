@@ -27,7 +27,7 @@ export const TASK_TYPES = [
 
 // Schema for creating a task
 export const createTaskSchema = z.object({
-  agentId: z.string().regex(UUID_REGEX, "Invalid agent ID format"),
+  agentId: z.string().regex(UUID_REGEX, "Invalid agent ID format").optional(),
   projectId: z.string().regex(UUID_REGEX, "Invalid project ID format"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),

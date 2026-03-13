@@ -350,9 +350,11 @@ describe("Database Schema", () => {
       // Delete task
       await db.delete(tasks).where(eq(tasks.id, taskId));
 
-      // Verify log is also deleted
+      // Verify log still exists (logs are kept for audit purposes)
+      // The task_id remains since there's no foreign key constraint
       logResult = await db.select().from(taskLogs).where(eq(taskLogs.id, logId));
-      expect(logResult.length).toBe(0);
+      expect(logResult.length).toBe(1);
+      expect(logResult[0]!.taskId).toBe(taskId);
     });
   });
 });
