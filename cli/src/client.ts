@@ -281,3 +281,97 @@ export async function releaseTask(taskId: string): Promise<Task> {
 
   return response.json() as Promise<Task>;
 }
+
+export interface Agent {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastSeenAt: string;
+}
+
+/**
+ * Get a single task by ID
+ * @param taskId - The ID of the task to fetch
+ * @returns The task details
+ * @throws Error if the API request fails
+ */
+export async function getTask(taskId: string): Promise<Task> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/tasks/${taskId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Task>;
+}
+
+/**
+ * Get a single agent by ID
+ * @param agentId - The ID of the agent to fetch
+ * @returns The agent details
+ * @throws Error if the API request fails
+ */
+export async function getAgent(agentId: string): Promise<Agent> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/agents/${agentId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Agent>;
+}
+
+/**
+ * Get a single project by ID
+ * @param projectId - The ID of the project to fetch
+ * @returns The project details
+ * @throws Error if the API request fails
+ */
+export async function getProject(projectId: string): Promise<Project> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/projects/${projectId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Project>;
+}

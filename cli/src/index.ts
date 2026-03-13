@@ -7,6 +7,7 @@ import { executeList, executeProjects } from "./commands/list";
 import { executeClaim } from "./commands/claim";
 import { executeUpdate } from "./commands/update";
 import { executeRelease } from "./commands/release";
+import { executeShow } from "./commands/show";
 import { createInterface } from "node:readline";
 
 const program = new Command();
@@ -178,6 +179,16 @@ program
   .argument("<task-id>", "Task ID (UUID)")
   .action(async (taskId: string) => {
     const exitCode = await executeRelease(taskId);
+    process.exit(exitCode);
+  });
+
+// Show task command
+program
+  .command("show")
+  .description("Show full details of a task")
+  .argument("<task-id>", "Task ID (UUID)")
+  .action(async (taskId: string) => {
+    const exitCode = await executeShow(taskId);
     process.exit(exitCode);
   });
 
