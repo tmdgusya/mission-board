@@ -1,4 +1,5 @@
 import { loadConfig } from "./config";
+import { withTimeout, API_TIMEOUT_MS } from "./errors";
 
 // Re-export task statuses for validation
 export const TASK_STATUSES = [
@@ -93,13 +94,16 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
     requiresApproval: input.requiresApproval ?? false,
   };
 
-  const response = await fetch(`${config.api_url}/api/tasks`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/tasks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -138,12 +142,15 @@ export async function listTasks(filters: ListTasksFilters = {}): Promise<Task[]>
   const queryString = params.toString();
   const url = `${config.api_url}/api/tasks${queryString ? `?${queryString}` : ""}`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -166,12 +173,15 @@ export async function listTasks(filters: ListTasksFilters = {}): Promise<Task[]>
 export async function listProjects(): Promise<Project[]> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/projects`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/projects`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -195,13 +205,16 @@ export async function listProjects(): Promise<Project[]> {
 export async function claimTask(taskId: string): Promise<Task> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/tasks/${taskId}/claim`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ agentId: config.agent_id }),
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/tasks/${taskId}/claim`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ agentId: config.agent_id }),
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string; currentOwner?: { agentId: string; claimedAt: string | null } };
@@ -232,13 +245,16 @@ export interface UpdateTaskInput {
 export async function updateTask(taskId: string, updates: UpdateTaskInput): Promise<Task> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/tasks/${taskId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updates),
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -262,12 +278,15 @@ export async function updateTask(taskId: string, updates: UpdateTaskInput): Prom
 export async function releaseTask(taskId: string): Promise<Task> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/tasks/${taskId}/release`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/tasks/${taskId}/release`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -298,12 +317,15 @@ export interface Agent {
 export async function getTask(taskId: string): Promise<Task> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/tasks/${taskId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/tasks/${taskId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -327,12 +349,15 @@ export async function getTask(taskId: string): Promise<Task> {
 export async function getAgent(agentId: string): Promise<Agent> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/agents/${agentId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/agents/${agentId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
@@ -356,12 +381,15 @@ export async function getAgent(agentId: string): Promise<Agent> {
 export async function getProject(projectId: string): Promise<Project> {
   const config = await loadConfig();
 
-  const response = await fetch(`${config.api_url}/api/projects/${projectId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await withTimeout(
+    fetch(`${config.api_url}/api/projects/${projectId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+    API_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };

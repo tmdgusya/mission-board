@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { getTask, getAgent, getProject, type Task } from "../client";
+import { formatError } from "../errors";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -118,47 +119,13 @@ export function formatTaskDetails(task: Task, agentName: string | null, projectN
  * @param error - The error object from API call
  * @returns Formatted error message
  */
+/**
+ * Format API error message for display (delegates to shared formatter)
+ * @param error - The error object from API call
+ * @returns Formatted error message
+ */
 export function formatShowError(error: unknown): string {
-  // Handle API response errors
-  if (error && typeof error === "object" && "response" in error) {
-    const apiError = error as {
-      response?: {
-        status: number;
-        data: {
-          error: string;
-          details?: unknown;
-        };
-      };
-    };
-
-    if (apiError.response) {
-      const { status, data } = apiError.response;
-
-      switch (status) {
-        case 400:
-          return chalk.red(`Error: ${data.error || "Invalid request"}`);
-
-        case 404:
-          return chalk.red(`Error: Task not found`);
-
-        case 500:
-          return chalk.red(`Error: Server error - ${data.error || "Please try again later"}`);
-
-        default:
-          return chalk.red(`Error: ${data.error || `HTTP ${status}`}`);
-      }
-    }
-  }
-
-  // Handle network errors
-  if (error instanceof Error) {
-    if (error.message.includes("fetch") || error.message.includes("connect") || error.message.includes("ECONNREFUSED")) {
-      return chalk.red("Error: Unable to connect to API. Is the server running?");
-    }
-    return chalk.red(`Error: ${error.message}`);
-  }
-
-  return chalk.red("Error: An unexpected error occurred");
+  return formatError(error);
 }
 
 /**

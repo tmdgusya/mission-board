@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { releaseTask } from "../client";
+import { formatError } from "../errors";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -14,52 +15,9 @@ export function formatReleaseSuccess(taskId: string): string {
 }
 
 /**
- * Format API error message for display
- * @param error - The error object from API call
- * @returns Formatted error message
+ * Format API error message (kept for backward compatibility, delegates to shared formatter).
  */
-export function formatReleaseError(error: unknown): string {
-  // Handle API response errors
-  if (error && typeof error === "object" && "response" in error) {
-    const apiError = error as {
-      response?: {
-        status: number;
-        data: {
-          error: string;
-        };
-      };
-    };
-
-    if (apiError.response) {
-      const { status, data } = apiError.response;
-
-      // Handle specific error codes
-      switch (status) {
-        case 400:
-          return chalk.red(`Error: ${data.error || "Invalid request"}`);
-
-        case 404:
-          return chalk.red(`Error: ${data.error || "Task not found"}`);
-
-        case 500:
-          return chalk.red(`Error: Server error - ${data.error || "Please try again later"}`);
-
-        default:
-          return chalk.red(`Error: ${data.error || `HTTP ${status}`}`);
-      }
-    }
-  }
-
-  // Handle network errors
-  if (error instanceof Error) {
-    if (error.message.includes("fetch") || error.message.includes("connect") || error.message.includes("ECONNREFUSED")) {
-      return chalk.red("Error: Unable to connect to API. Is the server running?");
-    }
-    return chalk.red(`Error: ${error.message}`);
-  }
-
-  return chalk.red("Error: An unexpected error occurred");
-}
+export const formatReleaseError = formatError;
 
 /**
  * Validate UUID format
@@ -95,7 +53,7 @@ export async function executeRelease(taskId: string): Promise<number> {
     console.log(chalk.gray(`  Agent: ${task.agentId || "Unassigned"}`));
     return 0;
   } catch (error) {
-    console.error(formatReleaseError(error));
+    console.error(formatError(error));
     return 1;
   }
 }

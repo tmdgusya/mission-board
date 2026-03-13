@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { listTasks, listProjects, type Task, type Project, type TaskStatus } from "../client";
 import { loadConfig } from "../config";
+import { formatError } from "../errors";
 
 // Valid task statuses
 const VALID_STATUSES: TaskStatus[] = [
@@ -169,56 +170,22 @@ export function formatProjectList(projects: Project[]): string {
  * @param error - The error object from API call
  * @returns Formatted error message
  */
+/**
+ * Format API error message for display (delegates to shared formatter)
+ * @param error - The error object from API call
+ * @returns Formatted error message
+ */
 export function formatListError(error: unknown): string {
-  // Handle API response errors
-  if (error && typeof error === "object" && "response" in error) {
-    const apiError = error as {
-      response?: {
-        status: number;
-        data: {
-          error: string;
-          details?: unknown;
-        };
-      };
-    };
-
-    if (apiError.response) {
-      const { status, data } = apiError.response;
-
-      switch (status) {
-        case 400:
-          return chalk.red(`Error: ${data.error || "Invalid request"}`);
-
-        case 404:
-          return chalk.red(`Error: ${data.error || "Not found"}`);
-
-        case 500:
-          return chalk.red(`Error: Server error - ${data.error || "Please try again later"}`);
-
-        default:
-          return chalk.red(`Error: ${data.error || `HTTP ${status}`}`);
-      }
-    }
-  }
-
-  // Handle network errors
-  if (error instanceof Error) {
-    if (error.message.includes("fetch") || error.message.includes("connect") || error.message.includes("ECONNREFUSED")) {
-      return chalk.red("Error: Unable to connect to API. Is the server running?");
-    }
-    return chalk.red(`Error: ${error.message}`);
-  }
-
-  return chalk.red("Error: An unexpected error occurred");
+  return formatError(error);
 }
 
 /**
- * Format projects API error message for display
+ * Format projects API error message for display (delegates to shared formatter)
  * @param error - The error object from API call
  * @returns Formatted error message
  */
 export function formatProjectsError(error: unknown): string {
-  return formatListError(error);
+  return formatError(error);
 }
 
 /**

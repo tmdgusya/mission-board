@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { createTask, type TaskType } from "../client";
+import { formatError } from "../errors";
 
 // Valid task types
 const VALID_TASK_TYPES: TaskType[] = [
@@ -23,59 +24,9 @@ export function formatCreateSuccess(taskId: string): string {
 }
 
 /**
- * Format API error message for display
- * @param error - The error object from API call
- * @returns Formatted error message
+ * Format API error message (kept for backward compatibility, delegates to shared formatter).
  */
-export function formatApiError(error: unknown): string {
-  // Handle API response errors
-  if (error && typeof error === "object" && "response" in error) {
-    const apiError = error as {
-      response?: {
-        status: number;
-        data: {
-          error: string;
-          details?: unknown;
-        };
-      };
-    };
-
-    if (apiError.response) {
-      const { status, data } = apiError.response;
-
-      // Handle specific error codes
-      switch (status) {
-        case 400:
-          if (data.details && Array.isArray(data.details)) {
-            const details = data.details
-              .map((d: { message?: string }) => d.message || String(d))
-              .join(", ");
-            return chalk.red(`Error: Validation failed - ${details}`);
-          }
-          return chalk.red(`Error: ${data.error || "Invalid request"}`);
-
-        case 404:
-          return chalk.red(`Error: ${data.error || "Not found"}`);
-
-        case 500:
-          return chalk.red(`Error: Server error - ${data.error || "Please try again later"}`);
-
-        default:
-          return chalk.red(`Error: ${data.error || `HTTP ${status}`}`);
-      }
-    }
-  }
-
-  // Handle network errors
-  if (error instanceof Error) {
-    if (error.message.includes("fetch") || error.message.includes("connect") || error.message.includes("ECONNREFUSED")) {
-      return chalk.red("Error: Unable to connect to API. Is the server running?");
-    }
-    return chalk.red(`Error: ${error.message}`);
-  }
-
-  return chalk.red("Error: An unexpected error occurred");
-}
+export const formatApiError = formatError;
 
 /**
  * Validate UUID format
@@ -152,7 +103,7 @@ export async function executeCreate(options: CreateCommandOptions): Promise<numb
     console.log(formatCreateSuccess(task.id));
     return 0;
   } catch (error) {
-    console.error(formatApiError(error));
+    console.error(formatError(error));
     return 1;
   }
 }
