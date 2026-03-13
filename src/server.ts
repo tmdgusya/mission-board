@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { projectsRouter } from "./api/routes/projects";
+import { tasksRouter } from "./api/routes/tasks";
 
 const app = new Hono();
 
@@ -20,6 +21,9 @@ app.get("/api/health", (c) => {
 
 // Mount project routes
 app.route("/api/projects", projectsRouter);
+
+// Mount task routes
+app.route("/api/tasks", tasksRouter);
 
 // Global error handler
 app.onError((err, c) => {
