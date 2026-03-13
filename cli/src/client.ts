@@ -1,5 +1,15 @@
 import { loadConfig } from "./config";
 
+// Re-export task statuses for validation
+export const TASK_STATUSES = [
+  "backlog",
+  "ready",
+  "in_progress",
+  "review",
+  "done",
+  "blocked",
+] as const;
+
 // Task type definitions matching the API schema
 export type TaskType =
   | "implementation"
@@ -174,4 +184,100 @@ export async function listProjects(): Promise<Project[]> {
   }
 
   return response.json() as Promise<Project[]>;
+}
+
+/**
+ * Claim a task for the configured agent
+ * @param taskId - The ID of the task to claim
+ * @returns The updated task
+ * @throws Error if the API request fails (including 409 conflict)
+ */
+export async function claimTask(taskId: string): Promise<Task> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/tasks/${taskId}/claim`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ agentId: config.agent_id }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string; currentOwner?: { agentId: string; claimedAt: string | null } };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Task>;
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+}
+
+/**
+ * Update a task
+ * @param taskId - The ID of the task to update
+ * @param updates - The fields to update
+ * @returns The updated task
+ * @throws Error if the API request fails
+ */
+export async function updateTask(taskId: string, updates: UpdateTaskInput): Promise<Task> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/tasks/${taskId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Task>;
+}
+
+/**
+ * Release a claimed task
+ * @param taskId - The ID of the task to release
+ * @returns The updated task
+ * @throws Error if the API request fails
+ */
+export async function releaseTask(taskId: string): Promise<Task> {
+  const config = await loadConfig();
+
+  const response = await fetch(`${config.api_url}/api/tasks/${taskId}/release`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" })) as { error: string };
+    const error = new Error(errorData.error || `HTTP ${response.status}`) as Error & { response?: { status: number; data: typeof errorData } };
+    error.response = {
+      status: response.status,
+      data: errorData,
+    };
+    throw error;
+  }
+
+  return response.json() as Promise<Task>;
 }

@@ -45,12 +45,10 @@ export async function configExists(): Promise<boolean> {
 }
 
 /**
- * Generate a default agent ID
+ * Generate a default agent ID (UUID format)
  */
 export function generateAgentId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  return `agent-${timestamp}-${random}`;
+  return crypto.randomUUID();
 }
 
 /**

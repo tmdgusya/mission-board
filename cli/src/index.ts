@@ -4,6 +4,9 @@ import chalk from "chalk";
 import { loadConfig, getConfigPath, updateConfig, validateAgentId, generateAgentId } from "./config";
 import { executeCreate } from "./commands/create";
 import { executeList, executeProjects } from "./commands/list";
+import { executeClaim } from "./commands/claim";
+import { executeUpdate } from "./commands/update";
+import { executeRelease } from "./commands/release";
 import { createInterface } from "node:readline";
 
 const program = new Command();
@@ -142,6 +145,39 @@ program
   .description("List all available projects")
   .action(async () => {
     const exitCode = await executeProjects();
+    process.exit(exitCode);
+  });
+
+// Claim task command
+program
+  .command("claim")
+  .description("Claim a task for the configured agent")
+  .argument("<task-id>", "Task ID (UUID)")
+  .action(async (taskId: string) => {
+    const exitCode = await executeClaim(taskId);
+    process.exit(exitCode);
+  });
+
+// Update task command
+program
+  .command("update")
+  .description("Update a task's status or other fields")
+  .argument("<task-id>", "Task ID (UUID)")
+  .option("--status <status>", "Update task status (backlog, ready, in_progress, review, done, blocked)")
+  .option("--title <title>", "Update task title")
+  .option("--description <description>", "Update task description")
+  .action(async (taskId: string, options: { status?: string; title?: string; description?: string }) => {
+    const exitCode = await executeUpdate(taskId, options);
+    process.exit(exitCode);
+  });
+
+// Release task command
+program
+  .command("release")
+  .description("Release a claimed task")
+  .argument("<task-id>", "Task ID (UUID)")
+  .action(async (taskId: string) => {
+    const exitCode = await executeRelease(taskId);
     process.exit(exitCode);
   });
 
