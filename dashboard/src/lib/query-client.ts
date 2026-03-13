@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/query-core";
 
 export const POLL_INTERVAL = 5000; // 5 seconds
 

@@ -16,15 +16,25 @@ import {
   getInvalidTransitionMessage,
   type TaskStatus,
 } from "../lib/status-transitions";
-import { useTasks } from "../hooks/use-tasks";
 import { useApiHealth } from "../hooks/use-api-health";
 import { useUpdateTask, useHandleApiError } from "../hooks/use-update-task";
 import { KanbanColumn } from "./KanbanColumn";
 import { TaskCard } from "./TaskCard";
 import { Toast, useToast } from "./Toast";
 
-export function KanbanBoard(): React.ReactElement {
-  const { data: tasks = [], isLoading, error: tasksError, refetch: refetchTasks } = useTasks();
+interface KanbanBoardProps {
+  tasks: Task[];
+  isLoading: boolean;
+  error: Error | null;
+  onRetry: () => void;
+}
+
+export function KanbanBoard({
+  tasks,
+  isLoading,
+  error: tasksError,
+  onRetry: refetchTasks,
+}: KanbanBoardProps): React.ReactElement {
   const { data: healthData, error: healthError, refetch: refetchHealth } = useApiHealth();
   const updateTask = useUpdateTask();
   const handleApiError = useHandleApiError();
@@ -174,7 +184,7 @@ export function KanbanBoard(): React.ReactElement {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "100%" }}>
+    <div>
       <div
         style={{
           display: "flex",
