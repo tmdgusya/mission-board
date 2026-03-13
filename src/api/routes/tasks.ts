@@ -11,6 +11,7 @@ import {
   getInvalidTransitionMessage,
   TASK_STATUSES,
 } from "../../schemas/tasks";
+import { ensureAgentExists, updateAgentLastSeen } from "../../services/agents";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,6 +51,11 @@ tasksRouter.post("/", async (c) => {
 
     if (projectResult.length === 0) {
       return c.json({ error: "Project not found" }, 404);
+    }
+
+    // Auto-register agent if it doesn't exist, or update last_seen_at
+    if (agentId) {
+      await ensureAgentExists(agentId);
     }
 
     const now = new Date();
@@ -346,11 +352,8 @@ tasksRouter.post("/:id/claim", async (c) => {
 
     const { agentId } = validationResult.data;
 
-    // Check if agent exists
-    const agentResult = await db.select().from(agents).where(eq(agents.id, agentId));
-    if (agentResult.length === 0) {
-      return c.json({ error: "Agent not found" }, 400);
-    }
+    // Auto-register agent if it doesn't exist, or update last_seen_at
+    await ensureAgentExists(agentId);
 
     // Check if task exists
     const existingTaskResult = await db.select().from(tasks).where(eq(tasks.id, id));

@@ -165,20 +165,30 @@ describe("Task Claim/Release API", () => {
       expect(data.error).toBeDefined();
     });
 
-    it("should return 400 for non-existent agent", async () => {
+    it("should auto-register non-existent agent when claiming", async () => {
       const projectId = await createTestProject();
       const taskId = await createTestTask(projectId, "Task", "backlog");
-      const nonExistentAgentId = crypto.randomUUID();
+      const newAgentId = crypto.randomUUID();
+
+      // Verify agent doesn't exist yet
+      const agentsBefore = await db.select().from(agents).where(eq(agents.id, newAgentId));
+      expect(agentsBefore.length).toBe(0);
 
       const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentId: nonExistentAgentId }),
+        body: JSON.stringify({ agentId: newAgentId }),
       });
 
-      expect(response.status).toBe(400);
-      const data = await response.json() as ErrorResponse;
-      expect(data.error).toContain("Agent not found");
+      // Should succeed and auto-create the agent
+      expect(response.status).toBe(200);
+      const data = await response.json() as TaskResponse;
+      expect(data.agentId).toBe(newAgentId);
+
+      // Verify agent was created
+      const agentsAfter = await db.select().from(agents).where(eq(agents.id, newAgentId));
+      expect(agentsAfter.length).toBe(1);
+      expect(agentsAfter[0]!.id).toBe(newAgentId);
     });
 
     it("should return 404 for non-existent task", async () => {
