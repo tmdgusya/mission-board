@@ -42,7 +42,19 @@ None required. SQLite runs embedded.
 
 No external env vars required. Application uses:
 - `PORT` - API server port (default: 3200)
+- `PORT` - Dashboard port (default: 3201, set via `bun run dev:dashboard`)
 - `DATABASE_PATH` - SQLite file path (default: ./data/mission-board.db)
+- `VITE_API_URL` - Dashboard API base URL (default: http://localhost:3200)
+
+## Dashboard
+
+- Uses **Bun.serve() with HTML imports** (NOT Vite). `dashboard/server.ts` serves `index.html` which imports `src/main.tsx`.
+- Hot reload is built-in via Bun's development mode (`hmr: true`).
+- Dashboard has its own `tsconfig.json` with DOM lib included.
+- Run with: `bun run dev:dashboard` (sets PORT=3201)
+- React Query configured with 5s polling interval (`POLL_INTERVAL` in `dashboard/src/lib/query-client.ts`)
+- API client singleton at `dashboard/src/lib/api-client.ts` (configurable base URL via `VITE_API_URL`)
+- Root tsconfig excludes dashboard files (separate typecheck needed: `cd dashboard && bunx tsc --noEmit`)
 
 ## Setup Notes
 

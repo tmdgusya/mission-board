@@ -1,0 +1,223 @@
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3200";
+
+export class ApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || API_BASE_URL;
+  }
+
+  private async request<T>(
+    path: string,
+    options?: RequestInit
+  ): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      ...options,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({
+        error: `Request failed with status ${response.status}`,
+      }));
+      const message =
+        typeof errorBody === "object" &&
+        errorBody !== null &&
+        "error" in errorBody
+          ? String(errorBody.error)
+          : "Unknown error";
+      throw new ApiError(response.status, message);
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return (await response.json()) as T;
+  }
+
+  // Projects
+  async listProjects(): Promise<Project[]> {
+    return this.request<Project[]>("/api/projects");
+  }
+
+  async getProject(id: string): Promise<Project> {
+    return this.request<Project>(`/api/projects/${id}`);
+  }
+
+  async createProject(data: {
+    name: string;
+    description?: string;
+  }): Promise<Project> {
+    return this.request<Project>("/api/projects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Tasks
+  async listTasks(params?: TaskQueryParams): Promise<Task[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.agent_id) searchParams.set("agent_id", params.agent_id);
+    const query = searchParams.toString();
+    return this.request<Task[]>(
+      `/api/tasks${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getTask(id: string): Promise<Task> {
+    return this.request<Task>(`/api/tasks/${id}`);
+  }
+
+  async createTask(data: {
+    title: string;
+    project_id: string;
+    agent_id?: string;
+    description?: string;
+    task_type?: string;
+    requires_approval?: boolean;
+  }): Promise<Task> {
+    return this.request<Task>("/api/tasks", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTask(
+    id: string,
+    data: { title?: string; description?: string; status?: string }
+  ): Promise<Task> {
+    return this.request<Task>(`/api/tasks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    return this.request<void>(`/api/tasks/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async claimTask(
+    id: string,
+    agentId: string
+  ): Promise<Task> {
+    return this.request<Task>(`/api/tasks/${id}/claim`, {
+      method: "POST",
+      body: JSON.stringify({ agent_id: agentId }),
+    });
+  }
+
+  async releaseTask(id: string): Promise<Task> {
+    return this.request<Task>(`/api/tasks/${id}/release`, {
+      method: "POST",
+    });
+  }
+
+  // Agents
+  async listAgents(): Promise<Agent[]> {
+    return this.request<Agent[]>("/api/agents");
+  }
+
+  async getAgent(id: string): Promise<Agent> {
+    return this.request<Agent>(`/api/agents/${id}`);
+  }
+
+  // Logs
+  async listLogs(params?: LogQueryParams): Promise<TaskLog[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.task_id) searchParams.set("task_id", params.task_id);
+    if (params?.agent_id) searchParams.set("agent_id", params.agent_id);
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.action) searchParams.set("action", params.action);
+    const query = searchParams.toString();
+    return this.request<TaskLog[]>(
+      `/api/logs${query ? `?${query}` : ""}`
+    );
+  }
+
+  // Health
+  async healthCheck(): Promise<{ status: string }> {
+    return this.request<{ status: string }>("/api/health");
+  }
+}
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// Singleton instance
+export const apiClient = new ApiClient();
+
+// Types
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Task {
+  id: string;
+  project_id: string;
+  agent_id: string | null;
+  title: string;
+  description: string | null;
+  task_type: string;
+  requires_approval: boolean;
+  status: TaskStatus;
+  created_at: string;
+  updated_at: string;
+  claimed_at: string | null;
+}
+
+export type TaskStatus =
+  | "backlog"
+  | "ready"
+  | "in_progress"
+  | "review"
+  | "done"
+  | "blocked";
+
+export interface Agent {
+  id: string;
+  name: string;
+  created_at: string;
+  last_seen_at: string;
+}
+
+export interface TaskLog {
+  id: string;
+  task_id: string;
+  agent_id: string;
+  action: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface TaskQueryParams {
+  project_id?: string;
+  status?: string;
+  agent_id?: string;
+}
+
+export interface LogQueryParams {
+  task_id?: string;
+  agent_id?: string;
+  project_id?: string;
+  action?: string;
+}
