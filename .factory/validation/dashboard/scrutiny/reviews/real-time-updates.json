@@ -1,0 +1,39 @@
+{
+  "featureId": "real-time-updates",
+  "reviewedAt": "2026-03-14T02:15:00.000Z",
+  "commitId": "4be124d04be8aa0ad992a6447e4395462719bc6c",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The feature correctly ensures consistent 5s polling across all React Query data hooks. The commit adds explicit refetchInterval: POLL_INTERVAL to useProjects, useAgents, and useAgent hooks that were previously relying solely on the QueryClient default. A comprehensive 11-test suite validates the polling configuration across all hooks. The implementation fully satisfies VAL-DASH-007 (real-time updates within 5s without manual refresh). Code quality is good — the POLL_INTERVAL constant is centralized in query-client.ts and all hooks import from there.",
+    "issues": [
+      {
+        "file": "dashboard/src/hooks/use-api-health.ts",
+        "line": 7,
+        "severity": "non_blocking",
+        "description": "useApiHealth uses hardcoded refetchInterval: 5000 instead of importing POLL_INTERVAL from '../lib/query-client'. While functionally correct, this creates a maintenance risk: if the polling interval changes, this hook would need to be updated separately. The test suite acknowledges this by checking for the literal '5000' rather than POLL_INTERVAL, but the inconsistency with every other hook is notable."
+      },
+      {
+        "file": "dashboard/src/lib/query-client.ts",
+        "line": 9,
+        "severity": "non_blocking",
+        "description": "refetchIntervalInBackground is set to false, which means polling pauses when the browser tab is not visible. This is a reasonable default for performance but could cause the dashboard to show stale data when a user switches back to the tab — the board won't update until the next 5s poll after the tab becomes active again (or until the window focus refetch triggers). This is acceptable behavior but worth noting."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The frontend-worker skill says to write tests first (RED-GREEN), but this was a verification/fix feature where the code largely already existed. The worker correctly deviated from the procedure and documented why. The skill's suggestedChanges field captures this: 'For verification features like this, consider a lighter procedure that focuses on verification + gap-filling rather than full RED-GREEN-TDD.' This is a valid process improvement for the skill.",
+      "evidence": "Handoff skillFeedback.deviations: 'The feature was already largely implemented (polling was set up in query-client.ts defaults and most hooks already had explicit refetchInterval). I wrote tests after confirming the existing implementation and added the missing polling to hooks that lacked it.'"
+    },
+    {
+      "area": "skills",
+      "observation": "The frontend-worker skill's work procedure step 3 says to start services with 'bun run dev:all', but services.yaml defines individual service commands (api: 'PORT=3200 bun run dev:api', dashboard: 'PORT=3201 bun run dev:dashboard'). The worker used services.yaml commands (per worker-base instructions) rather than the skill's 'bun run dev:all'. This discrepancy between the skill and the actual service startup mechanism should be reconciled.",
+      "evidence": "SKILL.md step 3: 'Start both API and frontend: bun run dev:all' vs services.yaml: individual start commands for api and dashboard."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The real-time-updates feature (VAL-DASH-007) is correctly implemented. All React Query data hooks (useTasks, useTask, useProjects, useAgents, useAgent, useLogs, useApiHealth) have 5s polling configured via refetchInterval. The QueryClient defaults in query-client.ts provide a global fallback (refetchInterval: 5000, staleTime: 3000, retry: 2). The commit specifically fixed 3 hooks (useProjects, useAgents, useAgent) that were missing explicit polling, and added an 11-test suite that validates the configuration across all hooks. Interactive verification confirmed that API-created tasks appear in the dashboard within 5s and status changes via curl are reflected automatically. Two non-blocking issues noted: useApiHealth uses a hardcoded 5000 instead of the POLL_INTERVAL constant, and refetchIntervalInBackground is false which pauses polling when the tab is not visible. Neither blocks the feature's acceptance criteria."
+}

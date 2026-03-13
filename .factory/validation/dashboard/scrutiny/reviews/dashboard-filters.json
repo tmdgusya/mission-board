@@ -1,0 +1,50 @@
+{
+  "featureId": "dashboard-filters",
+  "reviewedAt": "2026-03-14T01:52:00.000Z",
+  "commitId": "d8dd97d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The dashboard-filters feature is well-implemented with a clean separation of concerns. The Filters component renders project selector, status filter, agent filter, and search input, all of which work independently and together. The architecture correctly separates server-side filtering (project/status/agent via API query params) from client-side filtering (search by title/description). The Clear Filters button resets all filters and is only visible when filters are active. 37 comprehensive tests cover rendering, interactions, utility functions, and filter combinations. All tests pass.",
+    "issues": [
+      {
+        "file": "dashboard/src/components/Filters.tsx",
+        "line": 165,
+        "severity": "non_blocking",
+        "description": "Search input does not debounce onChange, meaning every keystroke triggers a state update through onFiltersChange → setFilters → buildApiParams → useTasks queryKey change. This is acceptable for small datasets but could cause excessive re-renders and API requests at scale. However, since search is client-side only and doesn't trigger API calls (only project/status/agent filters do), this is a minor concern."
+      },
+      {
+        "file": "dashboard/src/components/Filters.tsx",
+        "line": 195,
+        "severity": "non_blocking",
+        "description": "The 'Clear Filters' button uses inline onMouseEnter/onMouseLeave handlers for hover effects. This pattern is repeated across DashboardContent.tsx and other components. It works but is not idiomatic React; CSS :hover pseudo-class would be cleaner. Consistent with the existing codebase pattern though."
+      },
+      {
+        "file": "dashboard/src/components/DashboardContent.tsx",
+        "line": 68,
+        "severity": "non_blocking",
+        "description": "The hasActiveFilters computation is duplicated between Filters.tsx (line 104) and DashboardContent.tsx (line 68). The DashboardContent version is used to pass hasActiveFilters to KanbanBoard for the empty state. This is not a bug but a minor DRY violation."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker had to fix QueryClient import from @tanstack/react-query to @tanstack/query-core due to a Bun bundler issue with re-exported named exports via 'export *'. This is a Bun-specific workaround that affects any dashboard component using React Query. The fix is in dashboard/src/lib/query-client.ts and affects all consumers.",
+      "evidence": "Handoff discoveredIssues[1]: 'QueryClient import had to be changed from @tanstack/react-query to @tanstack/query-core due to Bun bundler issue'. Git diff shows dashboard/src/lib/query-client.ts changed import source."
+    },
+    {
+      "area": "conventions",
+      "observation": "The project uses inline styles extensively for React components rather than CSS modules or Tailwind, despite AGENTS.md mentioning 'CSS modules or Tailwind for styling' as the frontend convention. All dashboard components (Filters, KanbanBoard, DashboardContent, etc.) use inline style objects. This is consistent across the codebase but diverges from documented conventions.",
+      "evidence": "Filters.tsx uses inline style objects (selectStyle, inputStyle) throughout. KanbanBoard.tsx also uses inline styles. AGENTS.md states: 'CSS modules or Tailwind for styling'."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The architecture pattern of server-side vs client-side filtering is a meaningful design decision that could benefit from documentation. Project/status/agent filters go through the API via query params (triggering React Query refetch), while search is purely client-side. This means search only operates on already-fetched tasks, not the full database.",
+      "evidence": "buildApiParams() in Filters.tsx only includes project_id, status, agent_id. applyClientFilters() handles search locally. useTasks hook passes params to apiClient.listTasks which constructs URLSearchParams."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The dashboard-filters feature passes review. The implementation correctly delivers all four filter types (project selector, status filter, agent filter, search input) that work independently and together. Clear filters button resets all filters. The architecture cleanly separates server-side and client-side filtering. 37 tests pass with good coverage of rendering, interactions, utility functions, and filter combinations. Three non-blocking issues noted: no search debouncing (minor since search is client-side), duplicated hasActiveFilters logic, and inline hover handlers. None affect correctness or completeness."
+}

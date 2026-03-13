@@ -1,0 +1,49 @@
+{
+  "featureId": "create-task-form",
+  "reviewedAt": "2026-03-14T00:00:00.000Z",
+  "commitId": "c465f31",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The CreateTaskForm implementation is thorough and well-structured. It covers all required fields (project selector, title, description, task type), includes proper validation with error messages, integrates with the API via a custom useCreateTask hook that invalidates React Query caches, and handles errors with toast notifications. The form modal supports close via button/Cancel/Escape/overlay click, resets on reopen, and includes accessibility attributes. The test suite is comprehensive with 32 tests covering rendering, validation, submission, close behavior, form reset, and accessibility. Minor non-blocking observations: the 'requiresApproval' checkbox is an extra feature beyond the spec (not a problem), and the description is sent as undefined rather than null when empty (which is fine given the backend accepts optional description). The New Task button was added to DashboardContent with green styling and hover effects. All tests pass, typecheck passes, and the feature was verified interactively.",
+    "issues": [
+      {
+        "file": "dashboard/src/components/CreateTaskForm.tsx",
+        "line": 4,
+        "severity": "non_blocking",
+        "description": "Import of useHandleApiError from use-update-task.ts is a cross-concern import. The hook is defined in a file primarily for task updates. This works correctly but could be confusing. Consider extracting shared error utilities to a dedicated module if this pattern grows."
+      },
+      {
+        "file": "dashboard/src/components/CreateTaskForm.tsx",
+        "line": 139,
+        "severity": "non_blocking",
+        "description": "The form sends description as undefined (via 'description.trim() || undefined') when empty, while the backend schema accepts both undefined and empty string. This is fine functionally but means the behavior depends on the backend's Zod schema defaulting. The API client's createTask method also marks taskType as optional (taskType?: string) even though it's always sent from the form. Minor type inconsistency."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker imported useHandleApiError from use-update-task.ts, a file that exports both a mutation hook and an error handling utility. This cross-module import pattern (importing a utility from a hook file) isn't documented in AGENTS.md. AGENTS.md mentions 'hooks' in the project structure but doesn't specify whether utility functions should be co-located with hooks or in a separate utils module.",
+      "evidence": "CreateTaskForm.tsx:4 — 'import { useHandleApiError } from \"../hooks/use-update-task\"' — the useHandleApiError function is defined in use-update-task.ts alongside useUpdateTask, despite being a general-purpose error handler."
+    },
+    {
+      "area": "conventions",
+      "observation": "The AGENTS.md mentions 'CSS modules or Tailwind for styling' for frontend, but all dashboard components use inline styles with React.CSSProperties objects. This is the established project convention across all dashboard features, but AGENTS.md doesn't reflect this reality.",
+      "evidence": "CreateTaskForm.tsx defines overlayStyle, modalStyle, labelStyle, etc. as module-level React.CSSProperties constants. The same pattern is used in DashboardContent.tsx, KanbanBoard.tsx, TaskDetail.tsx, and other dashboard components."
+    },
+    {
+      "area": "skills",
+      "observation": "The skill procedure says 'Write tests first (RED)' then 'Implement feature (GREEN)', but this is a TDD guideline that workers may not strictly follow. The handoff indicates skillFeedback.followedProcedure: true with no deviations, suggesting the worker did follow TDD. No skill changes needed.",
+      "evidence": "Handoff shows skillFeedback.followedProcedure: true, deviations: []. Worker created both CreateTaskForm.tsx and CreateTaskForm.test.tsx in the same commit."
+    },
+    {
+      "area": "services",
+      "observation": "No new services or commands were needed. The worker used existing bunx vitest and bun run typecheck commands from services.yaml. No gaps in services configuration.",
+      "evidence": "Handoff verification shows 'bunx vitest run --config dashboard/vitest.config.ts' and 'bun run typecheck' — both already defined in services.yaml."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The create-task-form feature is well-implemented and passes review. The CreateTaskForm component provides a modal with all required fields (project selector, title, description, task type), client-side validation with clear error messages, API submission via a useCreateTask React Query mutation hook, toast notifications for success/error, and proper form reset on reopen. The New Task button is integrated into DashboardContent. 32 comprehensive tests cover rendering, validation, submission, close behavior, form reset, and accessibility. All tests pass, typecheck succeeds, and interactive verification confirmed the feature works end-to-end. Two non-blocking observations about code organization (cross-module utility import, minor type inconsistencies) are noted but do not affect correctness or functionality."
+}

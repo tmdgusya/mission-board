@@ -1,0 +1,61 @@
+{
+  "featureId": "task-detail-view",
+  "reviewedAt": "2026-03-14T01:50:30.000Z",
+  "commitId": "d0b3b4e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The TaskDetail feature is a well-implemented modal component that fulfills all five expected behaviors from the feature spec. The implementation includes: (1) clicking a task card opens the detail modal, wired through DashboardContent→KanbanBoard→KanbanColumn→TaskCard via an onTaskClick callback chain; (2) all required fields are displayed (title, description, status badge, type badge, project, agent, timestamps, task ID, approval badge, activity history); (3) activity history is fetched from the logs API and rendered with action labels, colored dots, field change details, and sorted by date; (4) edit mode allows inline editing of title/description with save/cancel, including validation (empty title disabled) and toast feedback; (5) delete shows a confirmation dialog with warning message and cancel/confirm buttons, followed by query invalidation on success. The code is clean, uses existing hooks (useTask, useLogs, useAgents, useProjects, useUpdateTask, useDeleteTask), follows the project's dark theme styling patterns, and includes proper accessibility attributes (role=dialog, aria-modal, aria-label).",
+    "issues": [
+      {
+        "file": "dashboard/src/components/TaskDetail.tsx",
+        "line": 47,
+        "severity": "non_blocking",
+        "description": "The useEffect dependency array uses `task?.id` but references `task.title` and `task.description` inside the effect body. The eslint-disable comment suppresses this warning. While functionally correct (the effect resets when switching between tasks), it means edit state could become stale if a task is updated via the mutation and the id remains the same. This is mitigated by React Query's refetch which triggers re-render, but it's a minor code smell."
+      },
+      {
+        "file": "dashboard/src/components/TaskDetail.tsx",
+        "line": 160,
+        "severity": "non_blocking",
+        "description": "The `formatDate` function uses `toLocaleString()` which produces locale-dependent output. In tests, this could cause flaky test failures in different environments. The tests currently only check that timestamps are 'toBeInTheDocument()' rather than verifying specific date strings, which is the correct approach."
+      },
+      {
+        "file": "dashboard/src/components/TaskDetail.tsx",
+        "line": 86,
+        "severity": "non_blocking",
+        "description": "The loading spinner uses an inline `<style>` tag with `@keyframes spin`. This works but could conflict if multiple TaskDetail components are mounted simultaneously (unlikely but possible). Using CSS-in-JS or a class name would be cleaner."
+      },
+      {
+        "file": "dashboard/src/components/TaskDetail.test.tsx",
+        "line": 91,
+        "severity": "non_blocking",
+        "description": "The mock fetch implementation uses `url.includes('/api/tasks/')` which could match unintended routes (e.g., if a route like `/api/tasks-special/` existed). Using more specific matching or a regex would be more robust."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The skill says to write tests first (RED) then implement (GREEN) in a TDD approach. The transcript shows the worker read existing code extensively before implementing. However, the handoff indicates all 41 tests pass and the skill's skillFeedback.followedProcedure is true. The skill procedure is being followed at a high level.",
+      "evidence": "Handoff skillFeedback.followedProcedure: true, deviations: []. The worker's test file covers all expected behaviors comprehensively."
+    },
+    {
+      "area": "conventions",
+      "observation": "The AGENTS.md says frontend components should use 'CSS modules or Tailwind for styling', but this component (like all other dashboard components in the project) uses inline styles. This is consistent with the established codebase pattern but contradicts AGENTS.md guidance. AGENTS.md should be updated to reflect the actual inline styles convention used across the dashboard.",
+      "evidence": "dashboard/src/components/TaskDetail.tsx uses inline React.CSSProperties throughout. Same pattern in KanbanBoard.tsx, KanbanColumn.tsx, TaskCard.tsx, Filters.tsx, DashboardContent.tsx — all using inline styles. AGENTS.md line: 'CSS modules or Tailwind for styling'."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The worker discovered that Toast components are co-located within individual components (each component creates its own useToast instance) rather than being lifted to a top-level provider. This pattern works but means multiple toast containers can render simultaneously if multiple modals are open. This is a project-wide pattern already established in KanbanBoard.tsx.",
+      "evidence": "TaskDetail.tsx imports { Toast, useToast } from './Toast' and renders <Toast> inside the modal. KanbanBoard.tsx does the same. DashboardContent.tsx does NOT have a global toast provider."
+    },
+    {
+      "area": "conventions",
+      "observation": "The handleClick guard in TaskCard.tsx checks `!isDragActive` before calling onTaskClick. This is a good pattern for preventing accidental detail opens during drag operations. This pattern should be documented in AGENTS.md as a convention for interactive draggable elements.",
+      "evidence": "TaskCard.tsx:23-27: `const handleClick = (): void => { if (onTaskClick && !isDragActive) { onTaskClick(task.id); } };`"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The task-detail-view feature passes review. All five expected behaviors are implemented correctly: task card click opens detail modal, all fields are displayed, activity history from logs is shown with formatted action labels, edit mode updates title/description with save/cancel, and delete shows confirmation before removing the task. The code is clean, follows existing patterns, includes 41 comprehensive tests that all pass, and has proper accessibility attributes. Four non-blocking issues were noted (minor code smells and style choices). The most notable shared state observation is that AGENTS.md recommends CSS modules or Tailwind but the entire dashboard uses inline styles — this documentation should be corrected to match reality."
+}

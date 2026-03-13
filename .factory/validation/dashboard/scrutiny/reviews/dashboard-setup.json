@@ -1,0 +1,66 @@
+{
+  "featureId": "dashboard-setup",
+  "reviewedAt": "2026-03-14T00:00:00.000Z",
+  "commitId": "e78466f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The dashboard-setup feature is well-implemented. It correctly uses Bun.serve() with HTML imports (as required by the project's coding guidelines) rather than Vite, despite the feature description mentioning Vite. The server runs on PORT 3201 by default, React Query is configured with a 5s polling interval via POLL_INTERVAL constant, and the dev:dashboard script is correctly set up. The API client provides configurable base URL via VITE_API_URL env var. The root tsconfig properly excludes dashboard files via its include array. Documentation in .factory/library/environment.md was updated with important notes. A few minor observations but no blocking issues.",
+    "issues": [
+      {
+        "file": ".factory/library/environment.md",
+        "line": 45,
+        "severity": "non_blocking",
+        "description": "Duplicate PORT entry in the environment variables list. Both 'PORT - API server port (default: 3200)' and 'PORT - Dashboard port (default: 3201, set via bun run dev:dashboard)' appear. These should be consolidated into a single entry explaining PORT is context-dependent. Note: a later worker corrected this by documenting 'Do NOT use import.meta.env' and reformatting."
+      },
+      {
+        "file": "dashboard/src/hooks/use-projects.ts",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "In the original commit, useProjects did not import or use POLL_INTERVAL for refetchInterval (unlike use-tasks.ts and use-logs.ts). It relied on the global default from QueryClient. This was corrected by a later commit (4be124d). No impact since the QueryClient default is also 5s."
+      },
+      {
+        "file": "dashboard/src/hooks/use-agents.ts",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "Same as use-projects.ts - the original commit's useAgents hook did not explicitly set refetchInterval. Corrected by a later commit."
+      },
+      {
+        "file": "dashboard/src/App.tsx",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "The original commit contained a 302-line monolithic App.tsx with all dashboard components (KanbanBoard, KanbanColumn, TaskCard, LoadingIndicator, ErrorState) inline. This was refactored by subsequent features into separate component files under dashboard/src/components/. Acceptable for a setup feature since the components were basic scaffolding."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Worker correctly chose Bun.serve() with HTML imports over Vite (despite the feature description saying 'Set up React dashboard with Vite'). The coding guidelines (CLAUDE.md) explicitly say to use Bun.serve() and HTML imports, not Vite. The worker followed the project guidelines, which is correct. The worker also documented this decision in .factory/library/environment.md.",
+      "evidence": "Feature description says 'Set up React dashboard with Vite' but implementation uses Bun.serve() + HTML imports. dashboard/server.ts uses Bun.serve(). environment.md says 'Uses Bun.serve() with HTML imports (NOT Vite)'"
+    },
+    {
+      "area": "knowledge",
+      "observation": "Worker discovered that Bun's HTML imports don't support Vite-style import.meta.env, requiring process.env instead. This was documented in environment.md by a later worker (not in this commit). This is an important runtime quirk that could block future workers.",
+      "evidence": "Original commit's api-client.ts used import.meta.env.VITE_API_URL. Current file uses process.env?.VITE_API_URL. environment.md now has a 'Do NOT use import.meta.env' note."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Worker discovered that Bun test runner does NOT provide a DOM environment, making @testing-library/react tests fail with 'ReferenceError: document is not defined'. The worker's skillFeedback mentions skipping component tests for this setup feature because of this. This was documented by a later worker in environment.md.",
+      "evidence": "skillFeedback.deviations mentions 'Skipped component tests for this setup feature'. environment.md now has a 'Bun test + Testing Library' note explaining this limitation."
+    },
+    {
+      "area": "services",
+      "observation": "The dashboard service entry was correctly added to .factory/services.yaml with proper start/stop/healthcheck commands and depends_on: [api]. This matches the actual implementation.",
+      "evidence": ".factory/services.yaml shows dashboard service on port 3201, start command 'PORT=3201 bun run dev:dashboard', healthcheck 'curl -sf http://localhost:3201', depends_on: [api]"
+    },
+    {
+      "area": "conventions",
+      "observation": "The feature description mentioned 'Set up React dashboard with Vite' but the project's coding guidelines explicitly require Bun.serve() instead. This discrepancy between feature description and project conventions could confuse future workers. The mission spec generator should align feature descriptions with the project's actual tech stack.",
+      "evidence": "Feature description: 'Set up React dashboard with Vite'. AGENTS.md section on Frontend says 'Functional components with hooks, React Query for server state'. CLAUDE.md says 'Bun.serve() supports WebSockets, HTTPS, and routes. Don't use express. HTML imports fully support React'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The dashboard-setup feature successfully implements all expected behaviors: dashboard runs on port 3201 via Bun.serve(), React Query is configured with 5s polling interval, API base URL is configurable via VITE_API_URL, and the dev:dashboard script is correctly set up. The worker correctly followed project conventions (Bun.serve() over Vite as required by CLAUDE.md), set up proper tsconfig separation, documented discoveries in .factory/library/environment.md, and registered the service in services.yaml. Minor observations include inconsistent polling interval usage in some hooks (relying on global default) and a monolithic App.tsx that was later refactored. No blocking issues found."
+}

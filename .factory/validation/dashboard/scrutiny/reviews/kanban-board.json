@@ -1,0 +1,61 @@
+{
+  "featureId": "kanban-board",
+  "reviewedAt": "2026-03-14T01:51:00.000Z",
+  "commitId": "3c72c4e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The Kanban board implementation is solid and well-structured. It correctly implements all 6 status columns (backlog, ready, in_progress, review, done, blocked) with dnd-kit drag-and-drop, client-side status transition validation matching the backend rules, task cards displaying title/task type/agent name, and error/success toasts for feedback. The code is well-organized with separate concerns (status-transitions.ts for validation logic, KanbanBoard.tsx for orchestration, KanbanColumn.tsx for column UI, TaskCard.tsx for card UI, Toast.tsx for notifications). Tests are comprehensive with 47 vitest cases covering status transitions, component rendering, and flow logic. A few minor non-blocking issues were found.",
+    "issues": [
+      {
+        "file": "dashboard/src/components/DashboardContent.tsx",
+        "line": 87,
+        "severity": "non_blocking",
+        "description": "Duplicate 'Mission Board' heading. DashboardContent.tsx renders a '<h1>Mission Board</h1>' header (line 87), and KanbanBoard.tsx also renders its own '<h1>Mission Board</h1>' (line 145) with a connection status indicator. The user sees two 'Mission Board' headings on the page. The one in DashboardContent.tsx should be removed since KanbanBoard's header includes the connection status indicator."
+      },
+      {
+        "file": "dashboard/src/components/KanbanBoard.tsx",
+        "line": 77,
+        "severity": "non_blocking",
+        "description": "The droppable ID is parsed using `overId.replace('column-', '')` as string manipulation. If a future droppable ID format is introduced that doesn't follow this pattern, the parsing could silently extract an invalid status. Using a more explicit parsing approach (e.g., checking prefix first) would be more robust, but this is acceptable for the current implementation where all droppable IDs are controlled by KanbanColumn."
+      },
+      {
+        "file": "dashboard/src/components/TaskCard.tsx",
+        "line": 52,
+        "severity": "non_blocking",
+        "description": "The `handleClick` function uses `isDragActive` from useDraggable to prevent click events during drag. However, `isDragActive` from useDraggable only reflects whether THIS specific card is being dragged, not whether a drag operation is in progress globally. This means clicking on a card while another card is being dragged elsewhere could still trigger the click handler. In practice this is unlikely to cause issues since dnd-kit manages focus during drag operations."
+      },
+      {
+        "file": "dashboard/src/components/KanbanBoard.test.tsx",
+        "line": 447,
+        "severity": "non_blocking",
+        "description": "The 'same-column drop is a no-op' test only checks `task.status === 'ready'` and doesn't actually simulate a same-column drag operation. It verifies the condition in handleDragEnd (`if (!task || task.status === targetStatus) return;`) implicitly, but could be more explicit about testing the actual behavior."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The frontend skill's SKILL.md says to 'Write tests first (RED)' and then 'Implement feature (GREEN)', suggesting a TDD approach. The worker instead implemented the feature first and added tests afterward. This worked well in practice since the feature was partially implemented by previous workers and this session was a fix iteration.",
+      "evidence": "Worker transcript shows reading existing code first, then fixing bugs (task_type→taskType, duplicate header), then rewriting tests."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The worker discovered that agent-browser's 'drag' command uses Playwright's HTML5 drag API which doesn't trigger dnd-kit's PointerSensor. The worker had to use pointer event simulation via `document.elementFromPoint().dispatchEvent()` instead. This is now documented in environment.md under 'Drag-and-drop' but could be more prominent in the frontend-worker SKILL.md as a known limitation.",
+      "evidence": "Worker transcript shows multiple failed attempts with agent-browser drag command, eventually succeeding with eval-based pointer event simulation. The environment.md was updated with the 'Drag-and-drop' note by this worker."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The worker skipped running `bun run typecheck` for the dashboard because the dashboard has a separate tsconfig.json from the root. The environment.md documents this, but the frontend-worker SKILL.md step 4 says to run `bun run typecheck` which only typechecks the root project, not the dashboard. The dashboard needs `cd dashboard && bunx tsc --noEmit` for type checking.",
+      "evidence": "Transcript shows the worker explicitly noted this deviation in skillFeedback, and environment.md has the note: 'Root tsconfig excludes dashboard files (separate typecheck needed: cd dashboard && bunx tsc --noEmit)'."
+    },
+    {
+      "area": "services",
+      "observation": "services.yaml already correctly documents the dashboard test:dashboard command as `bunx vitest run --config dashboard/vitest.config.ts`, which matches how the worker ran the tests. No gap here."
+      "evidence": "services.yaml shows: `test:dashboard: bunx vitest run --config dashboard/vitest.config.ts`"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The kanban-board feature is well-implemented and passes review. The 6-column Kanban board correctly displays tasks with title, task type badge, and agent name (or 'Unclaimed'). Drag-and-drop via dnd-kit works correctly with PointerSensor. Client-side status transition validation matches backend rules exactly (verified against src/schemas/tasks.ts). Invalid drops show error toasts with the specific error message. API integration via PATCH /api/tasks/:id correctly updates status on valid drops. Loading, error, and empty states are properly handled. The test suite has 47 vitest tests covering status transitions (12), component rendering (18), toast behavior (7), drag-drop flow (4), task grouping (3), column labels (6), and complete board rendering (1). Minor non-blocking issues: duplicate 'Mission Board' heading in DashboardContent.tsx, and a test that could be more explicit about same-column drop behavior. All 198 vitest tests pass across the entire dashboard."
+}
