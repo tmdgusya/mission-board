@@ -1,20 +1,40 @@
 import { Hono } from "hono";
 import { db } from "../../db/connection";
 import { tasks, agents, taskLogs } from "../../db/schema";
-import { sql, eq, and, isNotNull, gte, lte } from "drizzle-orm";
+import { sql, eq, and, isNotNull, gte, lte, desc } from "drizzle-orm";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const analyticsRouter = new Hono();
 
+// Helper: parse date query param
+function parseDateParam(value: string | undefined): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Helper: build date conditions for created_at filtering
+function buildDateConditions(dateFrom: Date | null, dateTo: Date | null) {
+  const conditions: ReturnType<typeof gte>[] = [];
+  if (dateFrom) conditions.push(gte(tasks.createdAt, dateFrom));
+  if (dateTo) conditions.push(lte(tasks.createdAt, dateTo));
+  return conditions;
+}
+
 // GET /api/analytics/agents - Per-agent performance stats
 analyticsRouter.get("/agents", async (c) => {
   try {
     const projectId = c.req.query("project_id");
+    const dateFrom = parseDateParam(c.req.query("date_from"));
+    const dateTo = parseDateParam(c.req.query("date_to"));
 
     // Build base conditions
-    const taskConditions = projectId ? [eq(tasks.projectId, projectId)] : [];
+    const taskConditions = [
+      ...(projectId ? [eq(tasks.projectId, projectId)] : []),
+      ...buildDateConditions(dateFrom, dateTo),
+    ];
 
     // Get all agents
     const agentList = await db.select().from(agents);
@@ -94,9 +114,14 @@ analyticsRouter.get("/agents", async (c) => {
 analyticsRouter.get("/tasks", async (c) => {
   try {
     const projectId = c.req.query("project_id");
+    const dateFrom = parseDateParam(c.req.query("date_from"));
+    const dateTo = parseDateParam(c.req.query("date_to"));
 
     // Build conditions
-    const conditions = projectId ? [eq(tasks.projectId, projectId)] : [];
+    const conditions = [
+      ...(projectId ? [eq(tasks.projectId, projectId)] : []),
+      ...buildDateConditions(dateFrom, dateTo),
+    ];
 
     // Get all tasks (or filtered by project)
     const allTasks =
@@ -162,9 +187,14 @@ analyticsRouter.get("/tasks", async (c) => {
 analyticsRouter.get("/time-tracking", async (c) => {
   try {
     const projectId = c.req.query("project_id");
+    const dateFrom = parseDateParam(c.req.query("date_from"));
+    const dateTo = parseDateParam(c.req.query("date_to"));
 
     // Build conditions
-    const conditions = projectId ? [eq(tasks.projectId, projectId)] : [];
+    const conditions = [
+      ...(projectId ? [eq(tasks.projectId, projectId)] : []),
+      ...buildDateConditions(dateFrom, dateTo),
+    ];
 
     // Get all tasks (or filtered by project)
     const allTasks =
@@ -224,6 +254,66 @@ analyticsRouter.get("/time-tracking", async (c) => {
     });
   } catch (error) {
     console.error("Error fetching time tracking analytics:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// GET /api/analytics/velocity - Velocity over time (tasks completed per day)
+analyticsRouter.get("/velocity", async (c) => {
+  try {
+    const projectId = c.req.query("project_id");
+    const dateFrom = parseDateParam(c.req.query("date_from"));
+    const dateTo = parseDateParam(c.req.query("date_to"));
+
+    // Default: last 30 days if no date range specified
+    const toDate = dateTo || new Date();
+    const fromDate = dateFrom || new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Build conditions: done tasks within the date range
+    const conditions = [
+      eq(tasks.status, "done"),
+      gte(tasks.updatedAt, fromDate),
+      lte(tasks.updatedAt, toDate),
+      ...(projectId ? [eq(tasks.projectId, projectId)] : []),
+    ];
+
+    const completedTasks = await db
+      .select()
+      .from(tasks)
+      .where(and(...conditions))
+      .orderBy(desc(tasks.updatedAt));
+
+    // Group by date
+    const velocityMap: Record<string, number> = {};
+    for (const task of completedTasks) {
+      if (task.updatedAt) {
+        const parts = task.updatedAt.toISOString().split("T");
+        const dateStr = parts[0] ?? "";
+        velocityMap[dateStr] = (velocityMap[dateStr] || 0) + 1;
+      }
+    }
+
+    // Fill in missing dates with 0 (use UTC dates to match toISOString())
+    const velocityData: { date: string; count: number }[] = [];
+    const current = new Date(fromDate.getTime());
+    // Normalize to UTC midnight
+    current.setUTCHours(0, 0, 0, 0);
+    const end = new Date(toDate.getTime());
+    end.setUTCHours(23, 59, 59, 999);
+
+    while (current <= end) {
+      const dateStrParts = current.toISOString().split("T");
+      const dateStr = dateStrParts[0] ?? "";
+      velocityData.push({
+        date: dateStr,
+        count: velocityMap[dateStr] || 0,
+      });
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    return c.json(velocityData);
+  } catch (error) {
+    console.error("Error fetching velocity analytics:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

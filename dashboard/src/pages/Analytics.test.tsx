@@ -1,10 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from "./Analytics";
-import type { AgentStat, TaskMetrics, TimeTrackingMetrics, Agent, Project } from "../lib/api-client";
+import {
+  DonutChart,
+  BarChart,
+  LineChart,
+  TaskStatusDonut,
+  AgentComparisonBar,
+  VelocityLine,
+} from "../components/Charts";
+import type { AgentStat, TaskMetrics, TimeTrackingMetrics, VelocityDataPoint, Project } from "../lib/api-client";
 
 // =============================================
 // Mock data
@@ -34,7 +42,7 @@ const mockAgentStats: AgentStat[] = [
     tasksCompleted: 15,
     tasksInProgress: 3,
     totalTasks: 20,
-    avgCompletionTimeMs: 3600000, // 1 hour
+    avgCompletionTimeMs: 3600000,
     successRate: 88.5,
   },
   {
@@ -43,7 +51,7 @@ const mockAgentStats: AgentStat[] = [
     tasksCompleted: 8,
     tasksInProgress: 2,
     totalTasks: 12,
-    avgCompletionTimeMs: 7200000, // 2 hours
+    avgCompletionTimeMs: 7200000,
     successRate: 72.0,
   },
   {
@@ -68,15 +76,23 @@ const mockTaskMetrics: TaskMetrics = {
     blocked: 2,
   },
   completionRate: 62.2,
-  avgTimeToCompletionMs: 5400000, // 1.5 hours
+  avgTimeToCompletionMs: 5400000,
 };
 
 const mockTimeTracking: TimeTrackingMetrics = {
-  avgCreatedToClaimedMs: 1800000, // 30 minutes
-  avgClaimedToCompletedMs: 3600000, // 1 hour
+  avgCreatedToClaimedMs: 1800000,
+  avgClaimedToCompletedMs: 3600000,
   tasksWithClaimData: 30,
   tasksWithCompletionData: 23,
 };
+
+const mockVelocityData: VelocityDataPoint[] = [
+  { date: "2026-03-01", count: 2 },
+  { date: "2026-03-02", count: 3 },
+  { date: "2026-03-03", count: 1 },
+  { date: "2026-03-04", count: 4 },
+  { date: "2026-03-05", count: 2 },
+];
 
 const mockAgentStatsEmpty: AgentStat[] = [];
 
@@ -132,12 +148,14 @@ function mockAnalyticsApis(overrides?: {
   agentStats?: AgentStat[];
   taskMetrics?: TaskMetrics;
   timeTracking?: TimeTrackingMetrics;
+  velocity?: VelocityDataPoint[];
   projects?: Project[];
   fail?: boolean;
 }) {
   const agentStats = overrides?.agentStats ?? mockAgentStats;
   const taskMetrics = overrides?.taskMetrics ?? mockTaskMetrics;
   const timeTracking = overrides?.timeTracking ?? mockTimeTracking;
+  const velocity = overrides?.velocity ?? mockVelocityData;
   const projects = overrides?.projects ?? mockProjects;
 
   mockFetch.mockImplementation((url: string, options?: RequestInit) => {
@@ -176,6 +194,15 @@ function mockAnalyticsApis(overrides?: {
       });
     }
 
+    // GET /api/analytics/velocity
+    if (url.includes("/api/analytics/velocity") && !options?.method) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => velocity,
+      });
+    }
+
     // GET /api/projects
     if (url.includes("/api/projects") && !options?.method && !url.includes("/api/projects/")) {
       return Promise.resolve({
@@ -203,7 +230,216 @@ function renderAnalytics() {
 }
 
 // =============================================
-// Tests
+// Chart Component Tests
+// =============================================
+
+describe("Charts Component", () => {
+  describe("DonutChart", () => {
+    it("renders with data", () => {
+      render(
+        <DonutChart
+          data={[
+            { label: "Done", value: 23, color: "#22c55e" },
+            { label: "In Progress", value: 10, color: "#f59e0b" },
+            { label: "Backlog", value: 8, color: "#64748b" },
+          ]}
+          testId="test-donut"
+        />
+      );
+
+      expect(screen.getByTestId("test-donut")).toBeInTheDocument();
+      expect(screen.getByTestId("test-donut-legend")).toBeInTheDocument();
+    });
+
+    it("shows legend items for non-zero values", () => {
+      render(
+        <DonutChart
+          data={[
+            { label: "Done", value: 23, color: "#22c55e" },
+            { label: "In Progress", value: 10, color: "#f59e0b" },
+            { label: "Empty", value: 0, color: "#000000" },
+          ]}
+          testId="test-donut-legend"
+        />
+      );
+
+      expect(screen.getByText("Done")).toBeInTheDocument();
+      expect(screen.getByText("In Progress")).toBeInTheDocument();
+      // Zero-value items should not appear in legend
+      expect(screen.queryByText("Empty")).not.toBeInTheDocument();
+    });
+
+    it("renders with empty data", () => {
+      render(
+        <DonutChart
+          data={[{ label: "None", value: 0, color: "#64748b" }]}
+          testId="test-donut-empty"
+        />
+      );
+
+      expect(screen.getByTestId("test-donut-empty")).toBeInTheDocument();
+      // No legend should be shown
+      expect(screen.queryByTestId("test-donut-empty-legend")).not.toBeInTheDocument();
+    });
+
+    it("has accessible role and label", () => {
+      render(
+        <DonutChart
+          data={[{ label: "Done", value: 5, color: "#22c55e" }]}
+          testId="test-donut-a11y"
+        />
+      );
+
+      const canvas = screen.getByRole("img");
+      expect(canvas).toHaveAttribute("aria-label", "Donut chart showing task status distribution");
+    });
+  });
+
+  describe("BarChart", () => {
+    it("renders with agent data", () => {
+      render(
+        <BarChart
+          data={[
+            { label: "Agent Alpha", value: 15 },
+            { label: "Agent Beta", value: 8 },
+            { label: "Agent Gamma", value: 0 },
+          ]}
+          testId="test-bar"
+        />
+      );
+
+      expect(screen.getByTestId("test-bar")).toBeInTheDocument();
+    });
+
+    it("renders with empty data", () => {
+      render(<BarChart data={[]} testId="test-bar-empty" />);
+
+      expect(screen.getByTestId("test-bar-empty")).toBeInTheDocument();
+    });
+
+    it("has accessible role and label", () => {
+      render(
+        <BarChart
+          data={[{ label: "Agent", value: 5 }]}
+          testId="test-bar-a11y"
+        />
+      );
+
+      const canvas = screen.getByRole("img");
+      expect(canvas).toHaveAttribute("aria-label", "Bar chart comparing agents");
+    });
+  });
+
+  describe("LineChart", () => {
+    it("renders with velocity data", () => {
+      render(
+        <LineChart
+          data={{
+            data: [
+              { date: "2026-03-01", count: 2 },
+              { date: "2026-03-02", count: 3 },
+            ],
+          }}
+          testId="test-line"
+        />
+      );
+
+      expect(screen.getByTestId("test-line")).toBeInTheDocument();
+    });
+
+    it("renders with empty data", () => {
+      render(
+        <LineChart
+          data={{ data: [] }}
+          testId="test-line-empty"
+        />
+      );
+
+      expect(screen.getByTestId("test-line-empty")).toBeInTheDocument();
+    });
+
+    it("has accessible role and label", () => {
+      render(
+        <LineChart
+          data={{ data: [{ date: "2026-03-01", count: 1 }] }}
+          testId="test-line-a11y"
+        />
+      );
+
+      const canvas = screen.getByRole("img");
+      expect(canvas).toHaveAttribute("aria-label", "Line chart showing velocity over time");
+    });
+  });
+
+  describe("TaskStatusDonut", () => {
+    it("renders donut section with status distribution", () => {
+      render(
+        <TaskStatusDonut
+          statusCounts={{ backlog: 5, ready: 3, in_progress: 8, done: 15, review: 2, blocked: 1 }}
+          totalTasks={34}
+        />
+      );
+
+      expect(screen.getByTestId("status-donut-section")).toBeInTheDocument();
+      expect(screen.getByTestId("status-donut")).toBeInTheDocument();
+    });
+
+    it("renders legend with status labels", () => {
+      render(
+        <TaskStatusDonut
+          statusCounts={{ backlog: 5, done: 15, in_progress: 8 }}
+          totalTasks={28}
+        />
+      );
+
+      expect(screen.getByText("Backlog")).toBeInTheDocument();
+      expect(screen.getByText("Done")).toBeInTheDocument();
+      expect(screen.getByText("In Progress")).toBeInTheDocument();
+    });
+  });
+
+  describe("AgentComparisonBar", () => {
+    it("renders agent comparison section", () => {
+      render(
+        <AgentComparisonBar
+          agentStats={[
+            { agentName: "Agent Alpha", tasksCompleted: 15, tasksInProgress: 3 },
+            { agentName: "Agent Beta", tasksCompleted: 8, tasksInProgress: 2 },
+          ]}
+        />
+      );
+
+      expect(screen.getByTestId("agent-comparison-section")).toBeInTheDocument();
+      expect(screen.getByTestId("agent-comparison-bar")).toBeInTheDocument();
+    });
+  });
+
+  describe("VelocityLine", () => {
+    it("renders velocity section with data", () => {
+      render(
+        <VelocityLine
+          velocityData={[
+            { date: "2026-03-01", count: 2 },
+            { date: "2026-03-02", count: 5 },
+          ]}
+        />
+      );
+
+      expect(screen.getByTestId("velocity-section")).toBeInTheDocument();
+      expect(screen.getByTestId("velocity-line")).toBeInTheDocument();
+    });
+
+    it("renders loading state", () => {
+      render(<VelocityLine velocityData={[]} isLoading={true} />);
+
+      expect(screen.getByTestId("velocity-section")).toBeInTheDocument();
+      expect(screen.getByText("Loading velocity data...")).toBeInTheDocument();
+    });
+  });
+});
+
+// =============================================
+// Analytics Page Tests
 // =============================================
 
 describe("Analytics Page", () => {
@@ -220,7 +456,6 @@ describe("Analytics Page", () => {
       mockAnalyticsApis();
       renderAnalytics();
 
-      // Initially may show loading, then shows main page
       await waitFor(() => {
         expect(screen.getByTestId("analytics-page")).toBeInTheDocument();
       });
@@ -230,17 +465,260 @@ describe("Analytics Page", () => {
       mockAnalyticsApis();
       renderAnalytics();
 
-      // Wait for data to load and main page to render
       await waitFor(() => {
         const select = screen.getByTestId("analytics-project-filter");
         expect(select).toBeInTheDocument();
       });
 
-      // Should have "All Projects" option and project options
       await waitFor(() => {
         expect(screen.getByText("All Projects")).toBeInTheDocument();
         expect(screen.getByText("Project Alpha")).toBeInTheDocument();
         expect(screen.getByText("Project Beta")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Date Range Filter (VAL-ANAL-007)", () => {
+    it("renders date range filter inputs", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-date-from")).toBeInTheDocument();
+        expect(screen.getByTestId("analytics-date-to")).toBeInTheDocument();
+      });
+    });
+
+    it("renders date from input with correct type", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        const dateFrom = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+        expect(dateFrom.type).toBe("date");
+      });
+    });
+
+    it("renders date to input with correct type", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        const dateTo = screen.getByTestId("analytics-date-to") as HTMLInputElement;
+        expect(dateTo.type).toBe("date");
+      });
+    });
+
+    it("sends date params when date range is set", async () => {
+      const user = userEvent.setup();
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-date-from")).toBeInTheDocument();
+      });
+
+      // Wait for initial data load
+      await waitFor(() => {
+        expect(screen.getByTestId("metric-total-tasks")).toHaveTextContent("37");
+      });
+
+      // Clear mocks
+      mockFetch.mockClear();
+      mockAnalyticsApis();
+
+      // Set the date_from input value and trigger change
+      const dateFrom = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+      fireEvent.change(dateFrom, { target: { value: "2026-03-01" } });
+
+      // Wait for a refetch - the date param should appear in the URL
+      await waitFor(() => {
+        const calls = mockFetch.mock.calls;
+        const agentCall = calls.find(
+          (call: string[]) =>
+            call[0].includes("/api/analytics/agents") &&
+            call[0].includes("date_from=")
+        );
+        expect(agentCall).toBeDefined();
+      });
+    });
+
+    it("shows clear filters button when filters are active", async () => {
+      const user = userEvent.setup();
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-date-from")).toBeInTheDocument();
+      });
+
+      // Set a date to activate filters
+      const dateFrom = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+      await user.type(dateFrom, "2026-03-01");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-clear-filters")).toBeInTheDocument();
+      });
+    });
+
+    it("clears all filters when clear button is clicked", async () => {
+      const user = userEvent.setup({ delay: 10 });
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-date-from")).toBeInTheDocument();
+      });
+
+      // Set filters
+      const dateFrom = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+      const projectSelect = screen.getByTestId("analytics-project-filter");
+
+      await user.type(dateFrom, "2026-03-01");
+
+      // Wait for clear button to appear after date is set
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-clear-filters")).toBeInTheDocument();
+      });
+
+      await user.selectOptions(projectSelect, "proj-1");
+
+      // Clear mocks and re-setup
+      mockFetch.mockClear();
+      mockAnalyticsApis();
+
+      // Click clear button
+      const clearButton = screen.getByTestId("analytics-clear-filters");
+      await user.click(clearButton);
+
+      // Verify date input is cleared
+      await waitFor(() => {
+        const dateInput = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+        expect(dateInput.value).toBe("");
+      });
+
+      // Verify data resets to unfiltered values (which implies project filter is cleared too)
+      await waitFor(() => {
+        expect(screen.getByTestId("metric-total-tasks")).toHaveTextContent("37");
+      });
+    });
+
+    it("does not show clear button when no filters are active", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-page")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("analytics-clear-filters")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Charts Display (VAL-ANAL-006)", () => {
+    it("renders the charts section", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("charts-section")).toBeInTheDocument();
+      });
+    });
+
+    it("renders task status donut chart", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("status-donut-section")).toBeInTheDocument();
+      });
+    });
+
+    it("renders agent comparison bar chart", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("agent-comparison-section")).toBeInTheDocument();
+      });
+    });
+
+    it("renders velocity line chart", async () => {
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("velocity-section")).toBeInTheDocument();
+      });
+    });
+
+    it("renders charts with empty data", async () => {
+      mockAnalyticsApis({
+        agentStats: mockAgentStatsEmpty,
+        taskMetrics: mockTaskMetricsEmpty,
+        timeTracking: mockTimeTrackingEmpty,
+        velocity: [],
+      });
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("charts-section")).toBeInTheDocument();
+        expect(screen.getByTestId("status-donut-section")).toBeInTheDocument();
+        expect(screen.getByTestId("agent-comparison-section")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Filters Update All Data (VAL-ANAL-007)", () => {
+    it("project filter updates all analytics queries", async () => {
+      const user = userEvent.setup();
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByText("Project Alpha")).toBeInTheDocument();
+      });
+
+      const select = screen.getByTestId("analytics-project-filter");
+      await user.selectOptions(select, "proj-1");
+
+      await waitFor(() => {
+        const calls = mockFetch.mock.calls;
+        const agentCall = calls.find(
+          (call: string[]) => call[0].includes("/api/analytics/agents?project_id=proj-1")
+        );
+        expect(agentCall).toBeDefined();
+      });
+    });
+
+    it("date range filter updates all analytics queries", async () => {
+      const user = userEvent.setup();
+      mockAnalyticsApis();
+      renderAnalytics();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analytics-date-from")).toBeInTheDocument();
+      });
+
+      const dateFrom = screen.getByTestId("analytics-date-from") as HTMLInputElement;
+      await user.type(dateFrom, "2026-03-01");
+
+      await waitFor(() => {
+        const calls = mockFetch.mock.calls;
+        const agentCall = calls.find(
+          (call: string[]) =>
+            call[0].includes("/api/analytics/agents") &&
+            call[0].includes("date_from=2026-03-01")
+        );
+        expect(agentCall).toBeDefined();
+
+        // Velocity endpoint should also receive date params
+        const velocityCall = calls.find(
+          (call: string[]) =>
+            call[0].includes("/api/analytics/velocity") &&
+            call[0].includes("date_from=2026-03-01")
+        );
+        expect(velocityCall).toBeDefined();
       });
     });
   });
@@ -393,7 +871,6 @@ describe("Analytics Page", () => {
 
       await waitFor(() => {
         const rows = screen.getAllByTestId(/^agent-row-/);
-        // Agent Alpha (15) should be first, then Beta (8), then Gamma (0)
         expect(rows[0]).toHaveAttribute("data-testid", "agent-row-agent-1");
         expect(rows[1]).toHaveAttribute("data-testid", "agent-row-agent-2");
         expect(rows[2]).toHaveAttribute("data-testid", "agent-row-agent-3");
@@ -454,65 +931,6 @@ describe("Analytics Page", () => {
     });
   });
 
-  describe("Project Filter", () => {
-    it("filters analytics when a project is selected", async () => {
-      const user = userEvent.setup();
-      mockAnalyticsApis();
-      renderAnalytics();
-
-      await waitFor(() => {
-        expect(screen.getByText("Project Alpha")).toBeInTheDocument();
-      });
-
-      const select = screen.getByTestId("analytics-project-filter");
-      await user.selectOptions(select, "proj-1");
-
-      // Should trigger a refetch with project_id parameter
-      await waitFor(() => {
-        const calls = mockFetch.mock.calls;
-        const analyticsCall = calls.find(
-          (call: string[]) => call[0].includes("/api/analytics/agents?project_id=proj-1")
-        );
-        expect(analyticsCall).toBeDefined();
-      });
-    });
-
-    it("resets to all projects when All Projects is selected", async () => {
-      const user = userEvent.setup();
-      mockAnalyticsApis();
-      renderAnalytics();
-
-      await waitFor(() => {
-        expect(screen.getByText("Project Alpha")).toBeInTheDocument();
-      });
-
-      const select = screen.getByTestId("analytics-project-filter");
-
-      // Select a project first
-      await user.selectOptions(select, "proj-1");
-      await waitFor(() => {
-        const calls = mockFetch.mock.calls;
-        const analyticsCall = calls.find(
-          (call: string[]) => call[0].includes("/api/analytics/agents?project_id=proj-1")
-        );
-        expect(analyticsCall).toBeDefined();
-      });
-
-      // Clear mock and set up new mock
-      mockFetch.mockClear();
-      mockAnalyticsApis();
-
-      // Select "All Projects" (empty value)
-      await user.selectOptions(select, "");
-
-      // Verify that the data resets back to all-projects data
-      // The metric values should return to unfiltered values
-      await waitFor(() => {
-        expect(screen.getByTestId("metric-total-tasks")).toHaveTextContent("37");
-      });
-    });
-  });
-
   describe("Navigation", () => {
     it("calls onBack when back button is clicked", async () => {
       const user = userEvent.setup();
@@ -535,7 +953,6 @@ describe("Analytics Page", () => {
 
   describe("Loading State", () => {
     it("shows loading state initially", () => {
-      // Don't resolve fetch - leave it hanging
       mockFetch.mockImplementation(() => new Promise(() => {}));
 
       renderAnalytics();
@@ -573,7 +990,6 @@ describe("Analytics Page", () => {
         expect(screen.getByTestId("retry-analytics-button")).toBeInTheDocument();
       });
 
-      // Clear mock and set up success response
       mockFetch.mockClear();
       mockAnalyticsApis();
 
@@ -581,7 +997,6 @@ describe("Analytics Page", () => {
       await user.click(retryButton);
 
       await waitFor(() => {
-        // Should have made new fetch calls
         expect(mockFetch).toHaveBeenCalled();
       });
     });
@@ -593,6 +1008,7 @@ describe("Analytics Page", () => {
         agentStats: mockAgentStatsEmpty,
         taskMetrics: mockTaskMetricsEmpty,
         timeTracking: mockTimeTrackingEmpty,
+        velocity: [],
       });
       renderAnalytics();
 

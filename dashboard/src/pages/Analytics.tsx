@@ -1,10 +1,16 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   useAgentStats,
   useTaskMetrics,
   useTimeTrackingMetrics,
+  useVelocity,
 } from "../hooks/use-analytics";
 import { useProjects } from "../hooks/use-projects";
+import {
+  TaskStatusDonut,
+  AgentComparisonBar,
+  VelocityLine,
+} from "../components/Charts";
 import type { AgentStat, TaskMetrics, TimeTrackingMetrics } from "../lib/api-client";
 
 // =============================================
@@ -505,10 +511,16 @@ function AnalyticsErrorState({
 
 export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
-  const analyticsParams = selectedProjectId
-    ? { projectId: selectedProjectId }
-    : undefined;
+  const analyticsParams = useMemo(() => {
+    const params: { projectId?: string; dateFrom?: string; dateTo?: string } = {};
+    if (selectedProjectId) params.projectId = selectedProjectId;
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
+    return Object.keys(params).length > 0 ? params : undefined;
+  }, [selectedProjectId, dateFrom, dateTo]);
 
   const {
     data: agentStats = [],
@@ -531,6 +543,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
     refetch: refetchTime,
   } = useTimeTrackingMetrics(analyticsParams);
 
+  const {
+    data: velocityData = [],
+    isLoading: velocityLoading,
+    refetch: refetchVelocity,
+  } = useVelocity(analyticsParams);
+
   const { data: projects = [] } = useProjects();
 
   const isLoading = agentsLoading || tasksLoading || timeLoading;
@@ -540,7 +558,8 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
     void refetchAgents();
     void refetchTasks();
     void refetchTime();
-  }, [refetchAgents, refetchTasks, refetchTime]);
+    void refetchVelocity();
+  }, [refetchAgents, refetchTasks, refetchTime, refetchVelocity]);
 
   const handleProjectChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -548,6 +567,28 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
     },
     []
   );
+
+  const handleDateFromChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDateFrom(e.target.value);
+    },
+    []
+  );
+
+  const handleDateToChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDateTo(e.target.value);
+    },
+    []
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedProjectId("");
+    setDateFrom("");
+    setDateTo("");
+  }, []);
+
+  const hasActiveFilters = !!(selectedProjectId || dateFrom || dateTo);
 
   // Loading state
   if (isLoading && !agentStats.length && !taskMetrics) {
@@ -584,49 +625,143 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
       {/* Header */}
       <AnalyticsHeader onBack={onBack} />
 
-      {/* Project Filter */}
+      {/* Filters */}
       <div
+        data-testid="analytics-filters"
         style={{
           display: "flex",
+          flexWrap: "wrap",
           alignItems: "center",
           gap: "12px",
           marginBottom: "24px",
         }}
       >
-        <label
-          htmlFor="analytics-project-filter"
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "#94a3b8",
-          }}
-        >
-          Project:
-        </label>
-        <select
-          id="analytics-project-filter"
-          data-testid="analytics-project-filter"
-          value={selectedProjectId}
-          onChange={handleProjectChange}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "6px",
-            border: "1px solid #334155",
-            backgroundColor: "#1e293b",
-            color: "#e2e8f0",
-            fontSize: "13px",
-            cursor: "pointer",
-            outline: "none",
-            minWidth: "180px",
-          }}
-        >
-          <option value="">All Projects</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
+        {/* Project Filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <label
+            htmlFor="analytics-project-filter"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#94a3b8",
+            }}
+          >
+            Project:
+          </label>
+          <select
+            id="analytics-project-filter"
+            data-testid="analytics-project-filter"
+            value={selectedProjectId}
+            onChange={handleProjectChange}
+            style={{
+              padding: "6px 12px",
+              borderRadius: "6px",
+              border: "1px solid #334155",
+              backgroundColor: "#1e293b",
+              color: "#e2e8f0",
+              fontSize: "13px",
+              cursor: "pointer",
+              outline: "none",
+              minWidth: "180px",
+            }}
+          >
+            <option value="">All Projects</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date Range Filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <label
+            htmlFor="analytics-date-from"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#94a3b8",
+            }}
+          >
+            From:
+          </label>
+          <input
+            id="analytics-date-from"
+            type="date"
+            data-testid="analytics-date-from"
+            value={dateFrom}
+            onChange={handleDateFromChange}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "6px",
+              border: "1px solid #334155",
+              backgroundColor: "#1e293b",
+              color: "#e2e8f0",
+              fontSize: "13px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <label
+            htmlFor="analytics-date-to"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#94a3b8",
+            }}
+          >
+            To:
+          </label>
+          <input
+            id="analytics-date-to"
+            type="date"
+            data-testid="analytics-date-to"
+            value={dateTo}
+            onChange={handleDateToChange}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "6px",
+              border: "1px solid #334155",
+              backgroundColor: "#1e293b",
+              color: "#e2e8f0",
+              fontSize: "13px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          />
+        </div>
+
+        {/* Clear Filters */}
+        {hasActiveFilters && (
+          <button
+            data-testid="analytics-clear-filters"
+            onClick={handleClearFilters}
+            style={{
+              padding: "6px 14px",
+              borderRadius: "6px",
+              border: "1px solid #475569",
+              backgroundColor: "transparent",
+              color: "#94a3b8",
+              fontSize: "13px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#1e293b";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            ✕ Clear
+          </button>
+        )}
       </div>
 
       {/* Section: Task Completion Metrics */}
@@ -667,7 +802,7 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
               />
             </div>
 
-            {/* Status distribution */}
+            {/* Status distribution bar view */}
             <div
               style={{
                 backgroundColor: "#1e293b",
@@ -690,6 +825,41 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Section: Charts */}
+      <section
+        data-testid="charts-section"
+        style={{
+          marginBottom: "32px",
+        }}
+      >
+        <SectionHeader title="Charts" icon="📈" />
+
+        <div
+          style={{
+            marginTop: "16px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "16px",
+          }}
+        >
+          {/* Donut Chart: Task Status Distribution */}
+          {taskMetrics && (
+            <TaskStatusDonut
+              statusCounts={taskMetrics.statusCounts}
+              totalTasks={taskMetrics.totalTasks}
+            />
+          )}
+
+          {/* Bar Chart: Agent Comparison */}
+          <AgentComparisonBar agentStats={agentStats} />
+        </div>
+
+        {/* Line Chart: Velocity Over Time */}
+        <div style={{ marginTop: "16px" }}>
+          <VelocityLine velocityData={velocityData} isLoading={velocityLoading} />
+        </div>
       </section>
 
       {/* Section: Agent Performance */}

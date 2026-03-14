@@ -181,18 +181,22 @@ export class ApiClient {
   }
 
   // Analytics
-  async getAgentStats(params?: { project_id?: string }): Promise<AgentStat[]> {
+  async getAgentStats(params?: { project_id?: string; date_from?: string; date_to?: string }): Promise<AgentStat[]> {
     const searchParams = new URLSearchParams();
     if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.date_from) searchParams.set("date_from", params.date_from);
+    if (params?.date_to) searchParams.set("date_to", params.date_to);
     const query = searchParams.toString();
     return this.request<AgentStat[]>(
       `/api/analytics/agents${query ? `?${query}` : ""}`
     );
   }
 
-  async getTaskMetrics(params?: { project_id?: string }): Promise<TaskMetrics> {
+  async getTaskMetrics(params?: { project_id?: string; date_from?: string; date_to?: string }): Promise<TaskMetrics> {
     const searchParams = new URLSearchParams();
     if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.date_from) searchParams.set("date_from", params.date_from);
+    if (params?.date_to) searchParams.set("date_to", params.date_to);
     const query = searchParams.toString();
     return this.request<TaskMetrics>(
       `/api/analytics/tasks${query ? `?${query}` : ""}`
@@ -201,12 +205,31 @@ export class ApiClient {
 
   async getTimeTrackingMetrics(params?: {
     project_id?: string;
+    date_from?: string;
+    date_to?: string;
   }): Promise<TimeTrackingMetrics> {
     const searchParams = new URLSearchParams();
     if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.date_from) searchParams.set("date_from", params.date_from);
+    if (params?.date_to) searchParams.set("date_to", params.date_to);
     const query = searchParams.toString();
     return this.request<TimeTrackingMetrics>(
       `/api/analytics/time-tracking${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getVelocity(params?: {
+    project_id?: string;
+    date_from?: string;
+    date_to?: string;
+  }): Promise<VelocityDataPoint[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.date_from) searchParams.set("date_from", params.date_from);
+    if (params?.date_to) searchParams.set("date_to", params.date_to);
+    const query = searchParams.toString();
+    return this.request<VelocityDataPoint[]>(
+      `/api/analytics/velocity${query ? `?${query}` : ""}`
     );
   }
 }
@@ -324,4 +347,9 @@ export interface TimeTrackingMetrics {
   avgClaimedToCompletedMs: number | null;
   tasksWithClaimData: number;
   tasksWithCompletionData: number;
+}
+
+export interface VelocityDataPoint {
+  date: string;
+  count: number;
 }
