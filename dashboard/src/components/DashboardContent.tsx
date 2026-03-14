@@ -11,6 +11,7 @@ import {
 } from "./Filters";
 import { TaskDetail } from "./TaskDetail";
 import { CreateTaskForm } from "./CreateTaskForm";
+import { CreateProjectForm } from "./CreateProjectForm";
 import { ApprovalQueue } from "./ApprovalQueue";
 import { Analytics } from "../pages/Analytics";
 
@@ -21,6 +22,7 @@ export function DashboardContent(): React.ReactElement {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [isCreateProjectFormOpen, setIsCreateProjectFormOpen] = useState(false);
 
   const apiParams = useMemo(() => buildApiParams(filters), [filters]);
   const {
@@ -53,6 +55,14 @@ export function DashboardContent(): React.ReactElement {
 
   const handleCloseCreateForm = useCallback(() => {
     setIsCreateFormOpen(false);
+  }, []);
+
+  const handleOpenCreateProjectForm = useCallback(() => {
+    setIsCreateProjectFormOpen(true);
+  }, []);
+
+  const handleCloseCreateProjectForm = useCallback(() => {
+    setIsCreateProjectFormOpen(false);
   }, []);
 
   const hasActiveFilters = useMemo(
@@ -185,6 +195,31 @@ export function DashboardContent(): React.ReactElement {
             )}
           </button>
           <button
+            data-testid="new-project-button"
+            onClick={handleOpenCreateProjectForm}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              border: "1px solid #3b82f644",
+              backgroundColor: "#1e293b",
+              color: "#60a5fa",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#334155";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#1e293b";
+            }}
+          >
+            + New Project
+          </button>
+          <button
             data-testid="new-task-button"
             onClick={handleOpenCreateForm}
             style={{
@@ -228,6 +263,7 @@ export function DashboardContent(): React.ReactElement {
       />
       <TaskDetail taskId={selectedTaskId} onClose={handleCloseDetail} />
       <CreateTaskForm isOpen={isCreateFormOpen} onClose={handleCloseCreateForm} />
+      <CreateProjectForm isOpen={isCreateProjectFormOpen} onClose={handleCloseCreateProjectForm} />
     </div>
   );
 }
