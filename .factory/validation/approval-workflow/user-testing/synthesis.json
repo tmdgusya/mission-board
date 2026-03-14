@@ -1,0 +1,28 @@
+{
+  "milestone": "approval-workflow",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-APPR-001",
+    "VAL-APPR-002",
+    "VAL-APPR-003",
+    "VAL-APPR-004",
+    "VAL-APPR-005",
+    "VAL-APPR-006",
+    "VAL-APPR-007",
+    "VAL-APPR-008",
+    "VAL-APPR-009",
+    "VAL-APPR-010",
+    "VAL-APPR-011"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}

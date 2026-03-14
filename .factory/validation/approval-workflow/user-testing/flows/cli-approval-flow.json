@@ -1,0 +1,20 @@
+{
+  "flowId": "cli-approval-flow",
+  "surface": "CLI",
+  "assertions": ["VAL-APPR-010", "VAL-APPR-011"],
+  "results": [
+    {
+      "assertionId": "VAL-APPR-010",
+      "status": "pass",
+      "evidence": "./dist/mission request-approval <task_id> --action 'Deploy via CLI' exited with code 0, displayed '✓ Approval request created successfully' with approval ID, task ID, action, and pending status. API confirmed approval created with status='pending'."
+    },
+    {
+      "assertionId": "VAL-APPR-011",
+      "status": "pass",
+      "evidence": "./dist/mission check-approval <task_id> exited with code 0 in all three states: (1) pending: showed 'pending — awaiting review', (2) approved: showed 'approved' with Reviewed by/At fields, (3) denied: showed 'denied' with reviewedBy, reviewedAt, and reviewer notes displayed."
+    }
+  ],
+  "toolsUsed": ["shell"],
+  "frictions": [],
+  "blockers": []
+}

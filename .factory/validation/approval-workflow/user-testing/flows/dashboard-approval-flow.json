@@ -1,0 +1,15 @@
+{
+  "flowId": "dashboard-approval-flow",
+  "surface": "Dashboard",
+  "assertions": ["VAL-APPR-003"],
+  "results": [
+    {
+      "assertionId": "VAL-APPR-003",
+      "status": "pass",
+      "evidence": "Dashboard approval queue view at http://localhost:3201 showed: (1) 'Approval Queue' header with '2 pending' badge, (2) Two approval items displaying task title, agent name, action requested, and timestamp, (3) Approve and Deny buttons on each item. Clicking Approve on one item processed it successfully, queue updated to '0 pending' with empty state message 'No Pending Approvals'. Screenshots saved."
+    }
+  ],
+  "toolsUsed": ["agent-browser"],
+  "frictions": [],
+  "blockers": []
+}

@@ -1,0 +1,50 @@
+{
+  "flowId": "api-approval-flow",
+  "surface": "API",
+  "assertions": ["VAL-APPR-001", "VAL-APPR-002", "VAL-APPR-004", "VAL-APPR-005", "VAL-APPR-006", "VAL-APPR-007", "VAL-APPR-008", "VAL-APPR-009"],
+  "results": [
+    {
+      "assertionId": "VAL-APPR-001",
+      "status": "pass",
+      "evidence": "POST /api/approvals with valid taskId (requires_approval=true), agentId, actionRequested returned 201 with status='pending'. Task status changed from 'backlog' to 'review' as verified by GET /api/tasks/:id."
+    },
+    {
+      "assertionId": "VAL-APPR-002",
+      "status": "pass",
+      "evidence": "POST /api/approvals for task with requires_approval=false returned 400 with 'Task does not require approval'. POST /api/approvals when approval already pending returned 409 with 'An approval request is already pending for this task'."
+    },
+    {
+      "assertionId": "VAL-APPR-004",
+      "status": "pass",
+      "evidence": "POST /api/approvals/:id/approve returned 200 with status='approved', reviewedBy set, reviewedAt set. Task status changed from 'review' to 'ready' as verified by GET /api/tasks/:id."
+    },
+    {
+      "assertionId": "VAL-APPR-005",
+      "status": "pass",
+      "evidence": "POST /api/approvals/:id/deny returned 200 with status='denied', reviewedBy set, reviewedAt set, notes='Security concerns - code review needed'. Task status changed from 'review' to 'blocked'."
+    },
+    {
+      "assertionId": "VAL-APPR-006",
+      "status": "pass",
+      "evidence": "POST /api/approvals/:id/approve on already-approved request returned 409 with 'Approval request has already been approved'. POST /api/approvals/:id/deny on same request returned 409."
+    },
+    {
+      "assertionId": "VAL-APPR-007",
+      "status": "pass",
+      "evidence": "GET /api/approvals returned array of 2 approvals including both 'approved' and 'denied' status entries with full details (id, taskId, agentId, actionRequested, status, reviewedBy, reviewedAt, notes, createdAt)."
+    },
+    {
+      "assertionId": "VAL-APPR-008",
+      "status": "pass",
+      "evidence": "GET /api/approvals?task_id=<taskId> returned filtered array containing only the approval for the specified task with correct status and details."
+    },
+    {
+      "assertionId": "VAL-APPR-009",
+      "status": "pass",
+      "evidence": "After denial (task in 'blocked'), POST /api/approvals with same taskId returned 201 with new pending approval. Task status changed from 'blocked' to 'review'. GET /api/approvals?task_id=<taskId> returned 2 entries: new 'pending' and previous 'denied' (history preserved)."
+    }
+  ],
+  "toolsUsed": ["curl"],
+  "frictions": [],
+  "blockers": []
+}
