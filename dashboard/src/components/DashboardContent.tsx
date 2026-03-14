@@ -12,8 +12,9 @@ import {
 import { TaskDetail } from "./TaskDetail";
 import { CreateTaskForm } from "./CreateTaskForm";
 import { ApprovalQueue } from "./ApprovalQueue";
+import { Analytics } from "../pages/Analytics";
 
-type View = "board" | "approvals";
+type View = "board" | "approvals" | "analytics";
 
 export function DashboardContent(): React.ReactElement {
   const [currentView, setCurrentView] = useState<View>("board");
@@ -75,9 +76,18 @@ export function DashboardContent(): React.ReactElement {
     setCurrentView("board");
   }, []);
 
+  const handleNavigateToAnalytics = useCallback(() => {
+    setCurrentView("analytics");
+  }, []);
+
   // Show approval queue view
   if (currentView === "approvals") {
     return <ApprovalQueue onBack={handleBackToBoard} />;
+  }
+
+  // Show analytics view
+  if (currentView === "analytics") {
+    return <Analytics onBack={handleBackToBoard} />;
   }
 
   return (
@@ -108,6 +118,33 @@ export function DashboardContent(): React.ReactElement {
           Mission Board
         </h1>
         <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            data-testid="analytics-nav-button"
+            onClick={handleNavigateToAnalytics}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              border: "1px solid #3b82f644",
+              backgroundColor: "#1e293b",
+              color: "#60a5fa",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#1e293b";
+              e.currentTarget.style.borderColor = "#3b82f688";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#1e293b";
+              e.currentTarget.style.borderColor = "#3b82f644";
+            }}
+          >
+            📈 Analytics
+          </button>
           <button
             data-testid="approval-queue-nav-button"
             onClick={handleNavigateToApprovals}

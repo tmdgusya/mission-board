@@ -179,6 +179,36 @@ export class ApiClient {
   async healthCheck(): Promise<{ status: string }> {
     return this.request<{ status: string }>("/api/health");
   }
+
+  // Analytics
+  async getAgentStats(params?: { project_id?: string }): Promise<AgentStat[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    const query = searchParams.toString();
+    return this.request<AgentStat[]>(
+      `/api/analytics/agents${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getTaskMetrics(params?: { project_id?: string }): Promise<TaskMetrics> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    const query = searchParams.toString();
+    return this.request<TaskMetrics>(
+      `/api/analytics/tasks${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getTimeTrackingMetrics(params?: {
+    project_id?: string;
+  }): Promise<TimeTrackingMetrics> {
+    const searchParams = new URLSearchParams();
+    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    const query = searchParams.toString();
+    return this.request<TimeTrackingMetrics>(
+      `/api/analytics/time-tracking${query ? `?${query}` : ""}`
+    );
+  }
 }
 
 export class ApiError extends Error {
@@ -269,4 +299,29 @@ export interface ApprovalRequest {
 export interface ApprovalQueryParams {
   task_id?: string;
   status?: string;
+}
+
+// Analytics types
+export interface AgentStat {
+  agentId: string;
+  agentName: string;
+  tasksCompleted: number;
+  tasksInProgress: number;
+  totalTasks: number;
+  avgCompletionTimeMs: number | null;
+  successRate: number | null;
+}
+
+export interface TaskMetrics {
+  totalTasks: number;
+  statusCounts: Record<string, number>;
+  completionRate: number;
+  avgTimeToCompletionMs: number | null;
+}
+
+export interface TimeTrackingMetrics {
+  avgCreatedToClaimedMs: number | null;
+  avgClaimedToCompletedMs: number | null;
+  tasksWithClaimData: number;
+  tasksWithCompletionData: number;
 }
