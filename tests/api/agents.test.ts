@@ -241,6 +241,167 @@ describe("Agent API Endpoints", () => {
   });
 });
 
+describe("POST /api/agents - Register agent", () => {
+  beforeAll(() => {
+    migrate();
+  });
+
+  beforeEach(async () => {
+    await db.delete(taskLogs);
+    await db.delete(tasks);
+    await db.delete(projects);
+    await db.delete(agents);
+  });
+
+  it("should create a new agent with id and name", async () => {
+    const agentId = crypto.randomUUID();
+    const response = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: agentId, name: "alice" }),
+    });
+
+    expect(response.status).toBe(201);
+    const data = await response.json() as AgentResponse;
+    expect(data.id).toBe(agentId);
+    expect(data.name).toBe("alice");
+    expect(data.createdAt).toBeDefined();
+    expect(data.lastSeenAt).toBeDefined();
+  });
+
+  it("should update name if agent with id already exists", async () => {
+    const agentId = crypto.randomUUID();
+
+    // Create agent first
+    const res1 = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: agentId, name: "alice" }),
+    });
+    expect(res1.status).toBe(201);
+
+    // Register again with different name — should update
+    const res2 = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: agentId, name: "bob" }),
+    });
+    expect(res2.status).toBe(200);
+
+    const data = await res2.json() as AgentResponse;
+    expect(data.id).toBe(agentId);
+    expect(data.name).toBe("bob");
+  });
+
+  it("should return 400 when name is missing", async () => {
+    const agentId = crypto.randomUUID();
+    const response = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: agentId }),
+    });
+    expect(response.status).toBe(400);
+
+    const data = await response.json() as ErrorResponse;
+    expect(data.error).toBeDefined();
+  });
+
+  it("should return 400 for invalid UUID format in id", async () => {
+    const response = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "not-a-uuid", name: "alice" }),
+    });
+    expect(response.status).toBe(400);
+
+    const data = await response.json() as ErrorResponse;
+    expect(data.error).toBeDefined();
+  });
+
+  it("should return 400 when name is empty string", async () => {
+    const agentId = crypto.randomUUID();
+    const response = await fetch(`${API_BASE_URL}/api/agents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: agentId, name: "" }),
+    });
+    expect(response.status).toBe(400);
+  });
+});
+
+describe("PATCH /api/agents/:id - Update agent name", () => {
+  beforeAll(() => {
+    migrate();
+  });
+
+  beforeEach(async () => {
+    await db.delete(taskLogs);
+    await db.delete(tasks);
+    await db.delete(projects);
+    await db.delete(agents);
+  });
+
+  async function createTestAgent(name: string): Promise<string> {
+    const agentId = crypto.randomUUID();
+    const now = new Date();
+    await db.insert(agents).values({
+      id: agentId,
+      name,
+      createdAt: now,
+      lastSeenAt: now,
+    });
+    return agentId;
+  }
+
+  it("should update agent name", async () => {
+    const agentId = await createTestAgent("alice");
+
+    const response = await fetch(`${API_BASE_URL}/api/agents/${agentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "bob" }),
+    });
+
+    expect(response.status).toBe(200);
+    const data = await response.json() as AgentResponse;
+    expect(data.id).toBe(agentId);
+    expect(data.name).toBe("bob");
+  });
+
+  it("should return 404 for non-existent agent", async () => {
+    const nonExistentId = crypto.randomUUID();
+    const response = await fetch(`${API_BASE_URL}/api/agents/${nonExistentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "alice" }),
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  it("should return 400 when name is missing", async () => {
+    const agentId = await createTestAgent("alice");
+
+    const response = await fetch(`${API_BASE_URL}/api/agents/${agentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 400 for invalid UUID in path", async () => {
+    const response = await fetch(`${API_BASE_URL}/api/agents/invalid-uuid`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "alice" }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+});
+
 describe("Agent Auto-Registration", () => {
   beforeAll(() => {
     // Run migrations before tests
