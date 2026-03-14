@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useTask } from "../hooks/use-tasks";
-import { useLogs } from "../hooks/use-logs";
 import { useAgents } from "../hooks/use-agents";
 import { useProjects } from "../hooks/use-projects";
 import { useUpdateTask, useHandleApiError } from "../hooks/use-update-task";
@@ -16,9 +15,6 @@ interface TaskDetailProps {
 
 export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactElement | null {
   const { data: task, isLoading: taskLoading, error: taskError } = useTask(taskId ?? "");
-  const { data: logs = [], isLoading: logsLoading } = useLogs(
-    taskId ? { task_id: taskId } : undefined
-  );
   const { data: agents = [] } = useAgents();
   const { data: projects = [] } = useProjects();
   const updateTask = useUpdateTask();

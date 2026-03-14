@@ -277,35 +277,20 @@ export async function getTaskLogs(filters?: {
       .where(and(...projectConditions))
       .orderBy(taskLogs.createdAt);
 
-    return joinResults.map((log) => ({
-      id: log.id,
-      taskId: log.taskId,
-      agentId: log.agentId,
-      action: log.action,
-      details: log.details,
-      reason: log.reason,
-      transcript: log.transcript,
-      createdAt: log.createdAt,
-    }));
+    return joinResults.map(formatLogEntry);
   }
 
   if (conditions.length > 0) {
     const results = await query.where(and(...conditions)).orderBy(taskLogs.createdAt);
-    return results.map((log) => ({
-      id: log.id,
-      taskId: log.taskId,
-      agentId: log.agentId,
-      action: log.action,
-      details: log.details,
-      reason: log.reason,
-      transcript: log.transcript,
-      createdAt: log.createdAt,
-    }));
+    return results.map(formatLogEntry);
   }
 
   const results = await query.orderBy(taskLogs.createdAt);
+  return results.map(formatLogEntry);
+}
 
-  return results.map((log) => ({
+function formatLogEntry(log: { id: string; taskId: string | null; agentId: string | null; action: string; details: string | null; reason: string | null; transcript: string | null; createdAt: Date }) {
+  return {
     id: log.id,
     taskId: log.taskId,
     agentId: log.agentId,
@@ -314,5 +299,5 @@ export async function getTaskLogs(filters?: {
     reason: log.reason,
     transcript: log.transcript,
     createdAt: log.createdAt,
-  }));
+  };
 }

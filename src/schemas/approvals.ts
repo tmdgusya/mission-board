@@ -1,19 +1,8 @@
 import { z } from "zod";
+import { reasoningSchema } from "./tasks";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Schema for a single transcript step
-const transcriptStepSchema = z.object({
-  step: z.number().int().positive().max(100),
-  thought: z.string().min(1).max(2000),
-});
-
-// Schema for agent reasoning
-const reasoningSchema = z.object({
-  reason: z.string().max(280).optional(),
-  transcript: z.array(transcriptStepSchema).max(50).optional(),
-}).strict();
 
 // Valid approval statuses
 export const APPROVAL_STATUSES = [
