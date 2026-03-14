@@ -3,9 +3,7 @@ import { db } from "../../src/db/connection";
 import { migrate } from "../../src/db/migrate";
 import { projects, tasks, agents } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
-
-// Test configuration
-const API_BASE_URL = "http://localhost:3200";
+import { API_BASE_URL } from "../test-config";
 
 // Type for API responses
 interface TaskResponse {

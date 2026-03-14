@@ -1,7 +1,5 @@
 import { describe, it, expect } from "bun:test";
-
-// Test configuration
-const API_BASE_URL = "http://localhost:3200";
+import { API_BASE_URL } from "../test-config";
 
 describe("Hono Server Setup", () => {
   describe("CORS Configuration", () => {

@@ -4,6 +4,16 @@ import * as schema from "./schema";
 
 const DATABASE_PATH = process.env.DATABASE_PATH || "./data/mission-board.db";
 
+// Prevent tests from touching the production database
+if (
+  process.env.NODE_ENV === "test" &&
+  DATABASE_PATH.includes("mission-board.db")
+) {
+  throw new Error(
+    "FATAL: Tests must not use the production database. Set DATABASE_PATH=./data/test.db"
+  );
+}
+
 // Initialize SQLite connection
 const sqlite = new Database(DATABASE_PATH);
 

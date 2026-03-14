@@ -8,8 +8,7 @@ import { migrate } from "../../src/db/migrate";
 import { resetDatabase } from "../db/reset";
 import { projects, tasks, agents, taskLogs } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
-
-const API_URL = `http://localhost:${process.env.TEST_PORT || 3200}`;
+import { API_BASE_URL as API_URL } from "../test-config";
 
 // Type definitions
 interface Project {

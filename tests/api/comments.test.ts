@@ -2,8 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from "bun:test";
 import { db } from "../../src/db/connection";
 import { migrate } from "../../src/db/migrate";
 import { projects, tasks, agents, taskComments, taskLogs, approvalRequests } from "../../src/db/schema";
-
-const API_BASE_URL = "http://localhost:3200";
+import { API_BASE_URL } from "../test-config";
 
 interface CommentResponse {
   id: string;

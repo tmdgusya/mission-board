@@ -11,7 +11,7 @@ import { tmpdir } from "os";
  * be running.
  */
 
-const API_BASE_URL = "http://localhost:3200";
+import { API_BASE_URL } from "../test-config";
 const HELPER_PATH = join(import.meta.dir, "..", "..", ".claude", "skills", "mission-helper.ts");
 
 // Temp config dir for test isolation

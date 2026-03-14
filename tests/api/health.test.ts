@@ -1,7 +1,5 @@
 import { describe, it, expect } from "bun:test";
-
-// Test configuration
-const API_BASE_URL = "http://localhost:3200";
+import { API_BASE_URL } from "../test-config";
 
 describe("GET /api/health - Health Check Endpoint", () => {
   it("should return 200 status code", async () => {

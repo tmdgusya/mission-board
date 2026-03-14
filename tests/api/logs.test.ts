@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, beforeEach } from "bun:test";
 import { migrate } from "../../src/db/migrate";
 import { resetDatabase } from "../db/reset";
 
-const API_URL = "http://localhost:3200";
+import { API_BASE_URL as API_URL } from "../test-config";
 
 // Type definitions
 interface Project {
