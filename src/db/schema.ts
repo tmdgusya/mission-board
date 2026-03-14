@@ -82,6 +82,19 @@ export const approvalRequests = sqliteTable("approval_requests", {
     .default(sql`(unixepoch())`),
 });
 
+// Task comments table
+export const taskComments = sqliteTable("task_comments", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  agentId: text("agent_id").references(() => agents.id, { onDelete: "set null" }),
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
 // Export types
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
@@ -93,3 +106,5 @@ export type TaskLog = typeof taskLogs.$inferSelect;
 export type NewTaskLog = typeof taskLogs.$inferInsert;
 export type ApprovalRequest = typeof approvalRequests.$inferSelect;
 export type NewApprovalRequest = typeof approvalRequests.$inferInsert;
+export type TaskComment = typeof taskComments.$inferSelect;
+export type NewTaskComment = typeof taskComments.$inferInsert;
