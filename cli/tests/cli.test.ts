@@ -66,7 +66,8 @@ describe("CLI Framework", () => {
       // Initialize config
       const config = await loadConfig();
       
-      expect(config).toHaveProperty("agent_id");
+      expect(config).toHaveProperty("agents");
+      expect(config).toHaveProperty("default_agent");
       expect(config).toHaveProperty("api_url");
       expect(config.api_url).toBe("http://localhost:3200");
     });
