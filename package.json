@@ -13,7 +13,8 @@
     "lint": "echo 'Linting not configured yet'",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "deploy:skills": "bun scripts/deploy-skills.ts"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
