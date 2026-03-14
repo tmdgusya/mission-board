@@ -114,7 +114,7 @@ export async function executeCheckApproval(taskId: string): Promise<number> {
     }
 
     // Show the most recent approval first (they're ordered by created_at desc from API)
-    const latest = approvals[0];
+    const latest = approvals[0]!;
 
     console.log(chalk.bold("Approval Status:"));
     console.log(formatApprovalStatus(latest));
