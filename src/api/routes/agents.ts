@@ -2,13 +2,11 @@ import { Hono } from "hono";
 import { db } from "../../db/connection";
 import { agents, tasks, taskLogs } from "../../db/schema";
 import { eq, inArray, or } from "drizzle-orm";
-import { z } from "zod";
-
-// UUID validation regex
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Schema for agent ID parameter
-const agentIdSchema = z.string().regex(UUID_REGEX, "Invalid UUID format");
+import {
+  agentIdSchema,
+  createAgentSchema,
+  updateAgentSchema,
+} from "../../schemas/agents";
 
 const agentsRouter = new Hono();
 
@@ -126,6 +124,115 @@ agentsRouter.get("/:id/tasks", async (c) => {
     return c.json(tasksList);
   } catch (error) {
     console.error("Error fetching agent tasks:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/agents - Register or update an agent
+agentsRouter.post("/", async (c) => {
+  try {
+    const body = await c.req.json();
+    const validation = createAgentSchema.safeParse(body);
+    if (!validation.success) {
+      return c.json(
+        { error: "Validation failed", details: validation.error.issues },
+        400
+      );
+    }
+
+    const { id, name } = validation.data;
+    const now = new Date();
+
+    // Check if agent already exists
+    const existing = await db.select().from(agents).where(eq(agents.id, id));
+
+    if (existing.length > 0) {
+      // Update existing agent's name and lastSeenAt
+      await db
+        .update(agents)
+        .set({ name, lastSeenAt: now })
+        .where(eq(agents.id, id));
+
+      const updated = await db.select().from(agents).where(eq(agents.id, id));
+      const agent = updated[0]!;
+      return c.json({
+        id: agent.id,
+        name: agent.name,
+        createdAt: agent.createdAt,
+        lastSeenAt: agent.lastSeenAt,
+      });
+    }
+
+    // Create new agent
+    await db.insert(agents).values({
+      id,
+      name,
+      createdAt: now,
+      lastSeenAt: now,
+    });
+
+    const created = await db.select().from(agents).where(eq(agents.id, id));
+    const agent = created[0]!;
+    return c.json(
+      {
+        id: agent.id,
+        name: agent.name,
+        createdAt: agent.createdAt,
+        lastSeenAt: agent.lastSeenAt,
+      },
+      201
+    );
+  } catch (error) {
+    console.error("Error registering agent:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// PATCH /api/agents/:id - Update agent name
+agentsRouter.patch("/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    // Validate UUID format
+    const idValidation = agentIdSchema.safeParse(id);
+    if (!idValidation.success) {
+      return c.json({ error: "Invalid UUID format" }, 400);
+    }
+
+    const body = await c.req.json();
+    const validation = updateAgentSchema.safeParse(body);
+    if (!validation.success) {
+      return c.json(
+        { error: "Validation failed", details: validation.error.issues },
+        400
+      );
+    }
+
+    const { name } = validation.data;
+
+    // Check if agent exists
+    const existing = await db.select().from(agents).where(eq(agents.id, id));
+    if (existing.length === 0) {
+      return c.json({ error: "Agent not found" }, 404);
+    }
+
+    // Update agent name and lastSeenAt
+    const now = new Date();
+    await db
+      .update(agents)
+      .set({ name, lastSeenAt: now })
+      .where(eq(agents.id, id));
+
+    const updated = await db.select().from(agents).where(eq(agents.id, id));
+    const agent = updated[0]!;
+    return c.json({
+      id: agent.id,
+      name: agent.name,
+      createdAt: agent.createdAt,
+      lastSeenAt: agent.lastSeenAt,
+    });
+  } catch (error) {
+    console.error("Error updating agent:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

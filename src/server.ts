@@ -6,6 +6,7 @@ import { agentsRouter } from "./api/routes/agents";
 import { logsRouter } from "./api/routes/logs";
 import { approvalsRouter } from "./api/routes/approvals";
 import { analyticsRouter } from "./api/routes/analytics";
+import { commentsRouter } from "./api/routes/comments";
 
 const app = new Hono();
 
@@ -40,6 +41,9 @@ app.route("/api/approvals", approvalsRouter);
 
 // Mount analytics routes
 app.route("/api/analytics", analyticsRouter);
+
+// Mount comments routes (under /api/tasks for /api/tasks/:id/comments)
+app.route("/api/tasks", commentsRouter);
 
 // Global error handler
 app.onError((err, c) => {

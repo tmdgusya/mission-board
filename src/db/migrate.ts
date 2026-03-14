@@ -77,6 +77,19 @@ function migrate() {
     );
   `);
 
+  // Create task_comments table
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS task_comments (
+      id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
+      agent_id TEXT,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+      FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
+    );
+  `);
+
   // Create indexes for performance
   console.log("Creating indexes...");
 
@@ -87,6 +100,9 @@ function migrate() {
 
   // Task logs index
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_task_logs_task_id ON task_logs(task_id);`);
+
+  // Task comments index
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_task_comments_task_id ON task_comments(task_id);`);
 
   // Approval requests index
   sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status);`);
