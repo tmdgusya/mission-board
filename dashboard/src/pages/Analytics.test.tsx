@@ -212,6 +212,24 @@ function mockAnalyticsApis(overrides?: {
       });
     }
 
+    // GET /api/tasks (used by ExportButtons)
+    if (url.includes("/api/tasks") && !options?.method && !url.includes("/api/tasks/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => [],
+      });
+    }
+
+    // GET /api/agents (used by ExportButtons)
+    if (url.includes("/api/agents") && !options?.method && !url.includes("/api/agents/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => [],
+      });
+    }
+
     return Promise.resolve({
       ok: true,
       status: 200,

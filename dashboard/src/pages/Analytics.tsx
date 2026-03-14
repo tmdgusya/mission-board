@@ -6,11 +6,14 @@ import {
   useVelocity,
 } from "../hooks/use-analytics";
 import { useProjects } from "../hooks/use-projects";
+import { useTasks } from "../hooks/use-tasks";
+import { useAgents } from "../hooks/use-agents";
 import {
   TaskStatusDonut,
   AgentComparisonBar,
   VelocityLine,
 } from "../components/Charts";
+import { ExportButtons } from "../components/Export";
 import type { AgentStat, TaskMetrics, TimeTrackingMetrics } from "../lib/api-client";
 
 // =============================================
@@ -551,6 +554,18 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
 
   const { data: projects = [] } = useProjects();
 
+  // Fetch tasks and agents for export functionality (respects filters)
+  const taskQueryParams = useMemo((): { project_id?: string } => {
+    const params: { project_id?: string } = {};
+    if (selectedProjectId) params.project_id = selectedProjectId;
+    return params;
+  }, [selectedProjectId]);
+
+  const tasksResult = useTasks(taskQueryParams);
+  const tasks = tasksResult.data ?? [];
+  const agentsResult = useAgents();
+  const agents = agentsResult.data ?? [];
+
   const isLoading = agentsLoading || tasksLoading || timeLoading;
   const hasError = agentsError || tasksError || timeError;
 
@@ -594,7 +609,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
   if (isLoading && !agentStats.length && !taskMetrics) {
     return (
       <div style={{ padding: "24px", maxWidth: "100%" }}>
-        <AnalyticsHeader onBack={onBack} />
+        <AnalyticsHeader
+          onBack={onBack}
+          tasks={tasks}
+          projects={projects}
+          agents={agents}
+        />
         <AnalyticsLoadingState />
       </div>
     );
@@ -604,7 +624,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
   if (hasError && !agentStats.length && !taskMetrics) {
     return (
       <div style={{ padding: "24px", maxWidth: "100%" }}>
-        <AnalyticsHeader onBack={onBack} />
+        <AnalyticsHeader
+          onBack={onBack}
+          tasks={tasks}
+          projects={projects}
+          agents={agents}
+        />
         <AnalyticsErrorState
           message="Failed to load analytics data. Please check your connection and try again."
           onRetry={handleRetry}
@@ -623,7 +648,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
       className="dashboard-container"
     >
       {/* Header */}
-      <AnalyticsHeader onBack={onBack} />
+      <AnalyticsHeader
+        onBack={onBack}
+        tasks={tasks}
+        projects={projects}
+        agents={agents}
+      />
 
       {/* Filters */}
       <div
@@ -941,8 +971,14 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
 
 function AnalyticsHeader({
   onBack,
+  tasks,
+  projects,
+  agents,
 }: {
   onBack: () => void;
+  tasks: { id: string; projectId: string; agentId: string | null; title: string; description: string | null; taskType: string; requiresApproval: boolean; status: string; createdAt: string; updatedAt: string; claimedAt: string | null }[];
+  projects: { id: string; name: string }[];
+  agents: { id: string; name: string }[];
 }): React.ReactElement {
   return (
     <div
@@ -951,6 +987,8 @@ function AnalyticsHeader({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: "24px",
+        flexWrap: "wrap",
+        gap: "12px",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -987,6 +1025,11 @@ function AnalyticsHeader({
           Analytics
         </h1>
       </div>
+      <ExportButtons
+        tasks={tasks}
+        projects={projects}
+        agents={agents}
+      />
     </div>
   );
 }
