@@ -58,6 +58,8 @@ export const taskLogs = sqliteTable("task_logs", {
   agentId: text("agent_id").references(() => agents.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   details: text("details"), // JSON stored as text
+  reason: text("reason"),
+  transcript: text("transcript"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

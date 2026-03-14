@@ -7,9 +7,12 @@ import {
   createTaskSchema,
   updateTaskSchema,
   taskIdSchema,
+  claimTaskSchema,
+  releaseTaskSchema,
   isValidStatusTransition,
   getInvalidTransitionMessage,
   TASK_STATUSES,
+  type ClaimTaskInput,
 } from "../../schemas/tasks";
 import { ensureAgentExists, updateAgentLastSeen } from "../../services/agents";
 import {
@@ -22,11 +25,6 @@ import {
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-// Schema for claiming a task
-const claimTaskSchema = z.object({
-  agentId: z.string().regex(UUID_REGEX, "Invalid agent ID format"),
-});
 
 const tasksRouter = new Hono();
 
@@ -304,7 +302,10 @@ tasksRouter.patch("/:id", async (c) => {
 
     // Log task update if there were changes
     if (fieldChanges.length > 0) {
-      await logTaskUpdated(id, existingTask.agentId, fieldChanges);
+      const reasoning = updates.reason || updates.transcript
+        ? { reason: updates.reason, transcript: updates.transcript }
+        : undefined;
+      await logTaskUpdated(id, existingTask.agentId, fieldChanges, reasoning);
     }
 
     // Fetch updated task
@@ -400,7 +401,7 @@ tasksRouter.post("/:id/claim", async (c) => {
       );
     }
 
-    const { agentId } = validationResult.data;
+    const { agentId, reason, transcript } = validationResult.data;
 
     // Auto-register agent if it doesn't exist, or update last_seen_at
     await ensureAgentExists(agentId);
@@ -467,8 +468,11 @@ tasksRouter.post("/:id/claim", async (c) => {
       })
       .where(eq(tasks.id, id));
 
-    // Log task claim
-    await logTaskClaimed(id, agentId, previousStatus);
+    // Log task claim with reasoning if provided
+    const reasoning = reason || transcript
+      ? { reason, transcript }
+      : undefined;
+    await logTaskClaimed(id, agentId, previousStatus, reasoning);
 
     // Fetch updated task
     const result = await db.select().from(tasks).where(eq(tasks.id, id));
@@ -518,6 +522,22 @@ tasksRouter.post("/:id/release", async (c) => {
     const now = new Date();
     const releasingAgentId = existingTask.agentId;
 
+    // Parse and validate body for optional reasoning fields
+    const body = await c.req.json().catch(() => ({}));
+    const validationResult = releaseTaskSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json(
+        {
+          error: "Validation failed",
+          details: validationResult.error.issues,
+        },
+        400
+      );
+    }
+    const reasoning = validationResult.data.reason || validationResult.data.transcript
+      ? { reason: validationResult.data.reason, transcript: validationResult.data.transcript }
+      : undefined;
+
     // Update task: clear agent_id, claimed_at, set status to ready
     await db
       .update(tasks)
@@ -529,8 +549,8 @@ tasksRouter.post("/:id/release", async (c) => {
       })
       .where(eq(tasks.id, id));
 
-    // Log task release
-    await logTaskReleased(id, releasingAgentId, "ready");
+    // Log task release with reasoning if provided
+    await logTaskReleased(id, releasingAgentId, "ready", reasoning);
 
     // Fetch updated task
     const result = await db.select().from(tasks).where(eq(tasks.id, id));

@@ -7,6 +7,7 @@ import { useUpdateTask, useHandleApiError } from "../hooks/use-update-task";
 import { useDeleteTask } from "../hooks/use-delete-task";
 import { STATUS_LABELS, STATUS_COLORS, type TaskStatus } from "../lib/status-transitions";
 import { Toast, useToast } from "./Toast";
+import { AgentReasoningTimeline } from "./AgentReasoningTimeline";
 
 interface TaskDetailProps {
   taskId: string | null;
@@ -53,7 +54,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
       updates.title = editTitle.trim();
     }
     if (editDescription.trim() !== (task.description ?? "")) {
-      updates.description = editDescription.trim() || null;
+      updates.description = editDescription.trim() || undefined;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -115,28 +116,6 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
   const formatDate = (dateStr: string | null | undefined): string => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleString();
-  };
-
-  const formatAction = (action: string): string => {
-    const labels: Record<string, string> = {
-      created: "Created",
-      claimed: "Claimed",
-      released: "Released",
-      updated: "Updated",
-      deleted: "Deleted",
-    };
-    return labels[action] || action;
-  };
-
-  const getActionColor = (action: string): string => {
-    const colors: Record<string, string> = {
-      created: "#22c55e",
-      claimed: "#3b82f6",
-      released: "#64748b",
-      updated: "#f59e0b",
-      deleted: "#ef4444",
-    };
-    return colors[action] || "#94a3b8";
   };
 
   if (taskLoading) {
@@ -408,92 +387,23 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
           </div>
         </div>
 
-        {/* Activity History */}
+        {/* Activity Timeline with Agent Reasoning */}
         <div style={{ marginBottom: "20px" }}>
           <h3
             style={sectionHeaderStyle}
             data-testid="activity-history-heading"
           >
-            Activity History
+            Activity Timeline
           </h3>
-          {logsLoading ? (
-            <div style={{ color: "#64748b", fontSize: "13px", fontFamily: "monospace" }}>
-              Loading activity...
-            </div>
-          ) : logs.length === 0 ? (
-            <div
-              data-testid="activity-history-empty"
-              style={{ color: "#475569", fontSize: "13px", fontFamily: "monospace" }}
-            >
-              No activity recorded
-            </div>
-          ) : (
-            <div
-              data-testid="activity-history-list"
-              style={{
-                maxHeight: "200px",
-                overflowY: "auto",
-                border: "1px solid rgba(0,255,204,0.08)",
-                borderRadius: "6px",
-              }}
-            >
-              {logs
-                .sort(
-                  (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-                )
-                .map((log) => (
-                  <div
-                    key={log.id}
-                    data-testid={`activity-log-${log.id}`}
-                    style={{
-                      padding: "10px 12px",
-                      borderBottom: "1px solid rgba(0,255,204,0.05)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: getActionColor(log.action),
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span
-                        data-testid={`log-action-${log.id}`}
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          color: getActionColor(log.action),
-                          minWidth: "70px",
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        {formatAction(log.action)}
-                      </span>
-                      <span
-                        data-testid={`log-details-${log.id}`}
-                        style={{ fontSize: "12px", color: "#64748b", fontFamily: "monospace" }}
-                      >
-                        {formatLogDetails(log.action, log.details)}
-                      </span>
-                    </div>
-                    <span
-                      data-testid={`log-time-${log.id}`}
-                      style={{ fontSize: "11px", color: "#475569", whiteSpace: "nowrap", fontFamily: "monospace" }}
-                    >
-                      {formatDate(log.createdAt)}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          )}
+          <div
+            style={{
+              maxHeight: "300px",
+              overflowY: "auto",
+              paddingRight: "8px",
+            }}
+          >
+            <AgentReasoningTimeline taskId={task.id} />
+          </div>
         </div>
 
         {/* Delete Confirmation */}
@@ -608,37 +518,6 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
       </div>
     </div>
   );
-}
-
-// Helper to format log details into a readable string
-function formatLogDetails(action: string, details: Record<string, unknown>): string {
-  if (!details || Object.keys(details).length === 0) return "";
-
-  switch (action) {
-    case "created":
-      return `Type: ${(details.task_type as string)?.replace("_", " ") || ""}`;
-    case "claimed":
-      return `By agent`;
-    case "released":
-      return `Status → ready`;
-    case "updated": {
-      const changes = details.field_changes as Array<{ field: string; old_value: unknown; new_value: unknown }> | undefined;
-      if (!changes || changes.length === 0) return "";
-      return changes
-        .map((c) => `${c.field}: ${formatValue(c.old_value)} → ${formatValue(c.new_value)}`)
-        .join(", ");
-    }
-    case "deleted":
-      return "Task removed";
-    default:
-      return "";
-  }
-}
-
-function formatValue(val: unknown): string {
-  if (val === null || val === undefined) return "—";
-  if (typeof val === "string") return val;
-  return String(val);
 }
 
 // Style constants

@@ -232,8 +232,10 @@ program
     "  If the task is already claimed by another agent, a 409 conflict is returned."
   )
   .argument("<task-id>", "Task UUID to claim")
-  .action(async (taskId: string) => {
-    const exitCode = await executeClaim(taskId, getGlobalAgentName());
+  .option("--reason <text>", "Short reasoning summary for this action")
+  .option("--transcript <json-file>", "Path to JSON file with reasoning steps, or - for stdin")
+  .action(async (taskId: string, options: { reason?: string; transcript?: string }) => {
+    const exitCode = await executeClaim(taskId, getGlobalAgentName(), options);
     process.exit(exitCode);
   });
 
@@ -251,7 +253,9 @@ program
   .option("--status <status>", "New status: backlog | ready | in_progress | review | done | blocked")
   .option("--title <title>", "New title for the task")
   .option("--description <description>", "New description for the task")
-  .action(async (taskId: string, options: { status?: string; title?: string; description?: string }) => {
+  .option("--reason <text>", "Short reasoning summary for this action")
+  .option("--transcript <json-file>", "Path to JSON file with reasoning steps, or - for stdin")
+  .action(async (taskId: string, options: { status?: string; title?: string; description?: string; reason?: string; transcript?: string }) => {
     const exitCode = await executeUpdate(taskId, options);
     process.exit(exitCode);
   });
@@ -265,8 +269,10 @@ program
     "  Other agents can then claim the task."
   )
   .argument("<task-id>", "Task UUID to release")
-  .action(async (taskId: string) => {
-    const exitCode = await executeRelease(taskId);
+  .option("--reason <text>", "Short reasoning summary for this action")
+  .option("--transcript <json-file>", "Path to JSON file with reasoning steps, or - for stdin")
+  .action(async (taskId: string, options: { reason?: string; transcript?: string }) => {
+    const exitCode = await executeRelease(taskId, options);
     process.exit(exitCode);
   });
 
@@ -295,8 +301,10 @@ program
   )
   .argument("<task-id>", "Task UUID to request approval for")
   .requiredOption("--action <description>", "Description of the action requiring approval")
-  .action(async (taskId: string, options: { action: string }) => {
-    const exitCode = await executeRequestApproval(taskId, options.action, getGlobalAgentName());
+  .option("--reason <text>", "Short reasoning summary for this action")
+  .option("--transcript <json-file>", "Path to JSON file with reasoning steps, or - for stdin")
+  .action(async (taskId: string, options: { action: string; reason?: string; transcript?: string }) => {
+    const exitCode = await executeRequestApproval(taskId, options.action, getGlobalAgentName(), options);
     process.exit(exitCode);
   });
 

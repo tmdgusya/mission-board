@@ -6,7 +6,7 @@ import { getTaskLogs } from "../../services/taskLogs";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Valid action types
-const VALID_ACTIONS = ["created", "claimed", "released", "updated", "deleted"] as const;
+const VALID_ACTIONS = ["created", "claimed", "released", "updated", "deleted", "approval_requested"] as const;
 
 // Query schema for logs
 const logsQuerySchema = z.object({
@@ -52,6 +52,8 @@ logsRouter.get("/", async (c) => {
       agentId: log.agentId,
       action: log.action,
       details: log.details,
+      reason: log.reason,
+      transcript: log.transcript,
       createdAt: log.createdAt,
     }));
 

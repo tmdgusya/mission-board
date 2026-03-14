@@ -285,12 +285,19 @@ export interface Agent {
   lastSeenAt: string;
 }
 
+export interface TranscriptStep {
+  step: number;
+  thought: string;
+}
+
 export interface TaskLog {
   id: string;
   taskId: string;
-  agentId: string;
+  agentId: string | null;
   action: string;
   details: Record<string, unknown>;
+  reason: string | null;
+  transcript: TranscriptStep[] | null;
   createdAt: string;
 }
 

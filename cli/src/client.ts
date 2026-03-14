@@ -208,14 +208,30 @@ export async function listProjects(): Promise<Project[]> {
   return response.json() as Promise<Project[]>;
 }
 
+export interface ReasoningStep {
+  step: number;
+  thought: string;
+}
+
+export interface Reasoning {
+  reason?: string;
+  transcript?: ReasoningStep[];
+}
+
 /**
  * Claim a task for the configured agent
  * @param taskId - The ID of the task to claim
+ * @param agentName - Optional agent name override
+ * @param reasoning - Optional reasoning information
  * @returns The updated task
  * @throws Error if the API request fails (including 409 conflict)
  */
-export async function claimTask(taskId: string, agentName?: string): Promise<Task> {
+export async function claimTask(taskId: string, agentName?: string, reasoning?: Reasoning): Promise<Task> {
   const { apiUrl, agentId } = await resolveAgentId(agentName);
+
+  const body: { agentId: string; reason?: string; transcript?: ReasoningStep[] } = { agentId };
+  if (reasoning?.reason) body.reason = reasoning.reason;
+  if (reasoning?.transcript) body.transcript = reasoning.transcript;
 
   const response = await withTimeout(
     fetch(`${apiUrl}/api/tasks/${taskId}/claim`, {
@@ -223,7 +239,7 @@ export async function claimTask(taskId: string, agentName?: string): Promise<Tas
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ agentId }),
+      body: JSON.stringify(body),
     }),
     API_TIMEOUT_MS
   );
@@ -251,11 +267,16 @@ export interface UpdateTaskInput {
  * Update a task
  * @param taskId - The ID of the task to update
  * @param updates - The fields to update
+ * @param reasoning - Optional reasoning information
  * @returns The updated task
  * @throws Error if the API request fails
  */
-export async function updateTask(taskId: string, updates: UpdateTaskInput): Promise<Task> {
+export async function updateTask(taskId: string, updates: UpdateTaskInput, reasoning?: Reasoning): Promise<Task> {
   const config = await loadConfig();
+
+  const body: UpdateTaskInput & { reason?: string; transcript?: ReasoningStep[] } = { ...updates };
+  if (reasoning?.reason) body.reason = reasoning.reason;
+  if (reasoning?.transcript) body.transcript = reasoning.transcript;
 
   const response = await withTimeout(
     fetch(`${config.api_url}/api/tasks/${taskId}`, {
@@ -263,7 +284,7 @@ export async function updateTask(taskId: string, updates: UpdateTaskInput): Prom
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(updates),
+      body: JSON.stringify(body),
     }),
     API_TIMEOUT_MS
   );
@@ -284,11 +305,16 @@ export async function updateTask(taskId: string, updates: UpdateTaskInput): Prom
 /**
  * Release a claimed task
  * @param taskId - The ID of the task to release
+ * @param reasoning - Optional reasoning information
  * @returns The updated task
  * @throws Error if the API request fails
  */
-export async function releaseTask(taskId: string): Promise<Task> {
+export async function releaseTask(taskId: string, reasoning?: Reasoning): Promise<Task> {
   const config = await loadConfig();
+
+  const body: { reason?: string; transcript?: ReasoningStep[] } | undefined = reasoning
+    ? { reason: reasoning.reason, transcript: reasoning.transcript }
+    : undefined;
 
   const response = await withTimeout(
     fetch(`${config.api_url}/api/tasks/${taskId}/release`, {
@@ -296,6 +322,7 @@ export async function releaseTask(taskId: string): Promise<Task> {
       headers: {
         "Content-Type": "application/json",
       },
+      body: body ? JSON.stringify(body) : undefined,
     }),
     API_TIMEOUT_MS
   );
@@ -432,11 +459,21 @@ export async function getProject(projectId: string): Promise<Project> {
  * Request approval for a task
  * @param taskId - The ID of the task to request approval for
  * @param actionRequested - Description of the action requiring approval
+ * @param agentName - Optional agent name override
+ * @param reasoning - Optional reasoning information
  * @returns The created approval request
  * @throws Error if the API request fails
  */
-export async function requestApproval(taskId: string, actionRequested: string, agentName?: string): Promise<ApprovalRequest> {
+export async function requestApproval(taskId: string, actionRequested: string, agentName?: string, reasoning?: Reasoning): Promise<ApprovalRequest> {
   const { apiUrl, agentId } = await resolveAgentId(agentName);
+
+  const body: { taskId: string; agentId: string; actionRequested: string; reason?: string; transcript?: ReasoningStep[] } = {
+    taskId,
+    agentId,
+    actionRequested,
+  };
+  if (reasoning?.reason) body.reason = reasoning.reason;
+  if (reasoning?.transcript) body.transcript = reasoning.transcript;
 
   const response = await withTimeout(
     fetch(`${apiUrl}/api/approvals`, {
@@ -444,11 +481,7 @@ export async function requestApproval(taskId: string, actionRequested: string, a
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        taskId,
-        agentId,
-        actionRequested,
-      }),
+      body: JSON.stringify(body),
     }),
     API_TIMEOUT_MS
   );

@@ -11,6 +11,7 @@ import {
   approveApprovalRequest,
   denyApprovalRequest,
 } from "../../services/approvals";
+import { logApprovalRequested } from "../../services/taskLogs";
 
 const approvalsRouter = new Hono();
 
@@ -31,7 +32,7 @@ approvalsRouter.post("/", async (c) => {
       );
     }
 
-    const { taskId, agentId, actionRequested } = validationResult.data;
+    const { taskId, agentId, actionRequested, reason, transcript } = validationResult.data;
 
     const result = await createApprovalRequest({
       taskId,
@@ -43,6 +44,16 @@ approvalsRouter.post("/", async (c) => {
       const statusCode = result.statusCode as 400 | 404 | 409;
       return c.json({ error: result.error }, statusCode);
     }
+
+    // Log the approval request with reasoning if provided
+    const reasoning = reason || transcript ? { reason, transcript } : undefined;
+    await logApprovalRequested(
+      taskId,
+      agentId,
+      result.approval.id,
+      actionRequested,
+      reasoning
+    );
 
     return c.json(result.approval, 201);
   } catch (error) {

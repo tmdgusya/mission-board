@@ -3,6 +3,18 @@ import { z } from "zod";
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Schema for a single transcript step
+export const transcriptStepSchema = z.object({
+  step: z.number().int().positive().max(100),
+  thought: z.string().min(1).max(2000),
+});
+
+// Schema for agent reasoning - can be merged into other schemas
+export const reasoningSchema = z.object({
+  reason: z.string().max(280).optional(),
+  transcript: z.array(transcriptStepSchema).max(50).optional(),
+}).strict();
+
 // Valid task statuses
 export const TASK_STATUSES = [
   "backlog",
@@ -40,7 +52,15 @@ export const updateTaskSchema = z.object({
   title: z.string().min(1, "Title cannot be empty").optional(),
   description: z.string().optional(),
   status: z.enum(TASK_STATUSES).optional(),
-});
+}).merge(reasoningSchema);
+
+// Schema for claiming a task
+export const claimTaskSchema = z.object({
+  agentId: z.string().regex(UUID_REGEX, "Invalid agent ID format"),
+}).merge(reasoningSchema);
+
+// Schema for releasing a task
+export const releaseTaskSchema = reasoningSchema;
 
 // Schema for task ID parameter
 export const taskIdSchema = z.string().regex(UUID_REGEX, "Invalid UUID format");
@@ -100,5 +120,9 @@ export function getInvalidTransitionMessage(
 // Type exports
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type ClaimTaskInput = z.infer<typeof claimTaskSchema>;
+export type ReleaseTaskInput = z.infer<typeof releaseTaskSchema>;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type TaskType = (typeof TASK_TYPES)[number];
+export type TranscriptStep = z.infer<typeof transcriptStepSchema>;
+export type ReasoningInput = z.infer<typeof reasoningSchema>;

@@ -3,7 +3,7 @@ import { taskLogs, tasks } from "../db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 // Valid action types for task logs
-export type TaskLogAction = "created" | "claimed" | "released" | "updated" | "deleted";
+export type TaskLogAction = "created" | "claimed" | "released" | "updated" | "deleted" | "approval_requested";
 
 // Interface for field changes in update actions
 export interface FieldChange {
@@ -45,7 +45,17 @@ export interface DeletedDetails {
   };
 }
 
-export type LogDetails = CreatedDetails | ClaimedDetails | ReleasedDetails | UpdatedDetails | DeletedDetails;
+export type LogDetails = CreatedDetails | ClaimedDetails | ReleasedDetails | UpdatedDetails | DeletedDetails | ApprovalRequestedDetails;
+
+export interface Reasoning {
+  reason?: string;
+  transcript?: { step: number; thought: string }[];
+}
+
+export interface ApprovalRequestedDetails {
+  approval_id: string;
+  action_requested: string;
+}
 
 /**
  * Creates a task log entry
@@ -59,7 +69,8 @@ export async function createTaskLog(
   taskId: string,
   agentId: string | null,
   action: TaskLogAction,
-  details: LogDetails
+  details: LogDetails,
+  reasoning?: Reasoning
 ): Promise<string> {
   const logId = crypto.randomUUID();
   const now = new Date();
@@ -70,6 +81,8 @@ export async function createTaskLog(
     agentId,
     action,
     details: JSON.stringify(details),
+    reason: reasoning?.reason ?? null,
+    transcript: reasoning?.transcript ? JSON.stringify(reasoning.transcript) : null,
     createdAt: now,
   });
 
@@ -109,12 +122,13 @@ export async function logTaskCreated(
 export async function logTaskClaimed(
   taskId: string,
   agentId: string,
-  previousStatus: string
+  previousStatus: string,
+  reasoning?: Reasoning
 ): Promise<void> {
   await createTaskLog(taskId, agentId, "claimed", {
     agent_id: agentId,
     previous_status: previousStatus,
-  });
+  }, reasoning);
 }
 
 /**
@@ -126,12 +140,13 @@ export async function logTaskClaimed(
 export async function logTaskReleased(
   taskId: string,
   agentId: string | null,
-  newStatus: string
+  newStatus: string,
+  reasoning?: Reasoning
 ): Promise<void> {
   await createTaskLog(taskId, agentId, "released", {
     agent_id: agentId,
     new_status: newStatus,
-  });
+  }, reasoning);
 }
 
 /**
@@ -143,13 +158,14 @@ export async function logTaskReleased(
 export async function logTaskUpdated(
   taskId: string,
   agentId: string | null,
-  fieldChanges: FieldChange[]
+  fieldChanges: FieldChange[],
+  reasoning?: Reasoning
 ): Promise<void> {
   if (fieldChanges.length === 0) return;
 
   await createTaskLog(taskId, agentId, "updated", {
     field_changes: fieldChanges,
-  });
+  }, reasoning);
 }
 
 /**
@@ -182,6 +198,19 @@ export async function logTaskDeleted(
   });
 }
 
+export async function logApprovalRequested(
+  taskId: string,
+  agentId: string,
+  approvalId: string,
+  actionRequested: string,
+  reasoning?: Reasoning
+): Promise<void> {
+  await createTaskLog(taskId, agentId, "approval_requested", {
+    approval_id: approvalId,
+    action_requested: actionRequested,
+  }, reasoning);
+}
+
 /**
  * Gets task logs with optional filters
  * @param filters - Optional filters
@@ -198,6 +227,8 @@ export async function getTaskLogs(filters?: {
   agentId: string | null;
   action: string;
   details: string | null;
+  reason: string | null;
+  transcript: string | null;
   createdAt: Date;
 }>> {
   let query = db.select().from(taskLogs);
@@ -237,6 +268,8 @@ export async function getTaskLogs(filters?: {
         agentId: taskLogs.agentId,
         action: taskLogs.action,
         details: taskLogs.details,
+        reason: taskLogs.reason,
+        transcript: taskLogs.transcript,
         createdAt: taskLogs.createdAt,
       })
       .from(taskLogs)
@@ -250,6 +283,8 @@ export async function getTaskLogs(filters?: {
       agentId: log.agentId,
       action: log.action,
       details: log.details,
+      reason: log.reason,
+      transcript: log.transcript,
       createdAt: log.createdAt,
     }));
   }
@@ -262,6 +297,8 @@ export async function getTaskLogs(filters?: {
       agentId: log.agentId,
       action: log.action,
       details: log.details,
+      reason: log.reason,
+      transcript: log.transcript,
       createdAt: log.createdAt,
     }));
   }
@@ -274,6 +311,8 @@ export async function getTaskLogs(filters?: {
     agentId: log.agentId,
     action: log.action,
     details: log.details,
+    reason: log.reason,
+    transcript: log.transcript,
     createdAt: log.createdAt,
   }));
 }

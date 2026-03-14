@@ -59,6 +59,17 @@ function migrate() {
     );
   `);
 
+  // Add reasoning columns if they don't exist
+  const taskLogColumns = sqlite.query("PRAGMA table_info(task_logs)").all() as { name: string }[];
+  const columnNames = taskLogColumns.map(c => c.name);
+
+  if (!columnNames.includes("reason")) {
+    sqlite.exec("ALTER TABLE task_logs ADD COLUMN reason TEXT");
+  }
+  if (!columnNames.includes("transcript")) {
+    sqlite.exec("ALTER TABLE task_logs ADD COLUMN transcript TEXT");
+  }
+
   // Create approval_requests table
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS approval_requests (
