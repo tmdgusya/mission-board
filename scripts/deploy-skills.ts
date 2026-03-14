@@ -1,66 +1,68 @@
 #!/usr/bin/env bun
 /**
- * Deploy skill files from the repo's .claude/skills/ directory
- * to the user's global ~/.claude/skills/ directory.
+ * Deploy the mission skill from the repo's .claude/skills/mission/ directory
+ * to the user's global ~/.claude/skills/mission/ directory.
  *
- * - Copies all .md skill files
- * - Copies mission-helper.ts
- * - Rewrites relative helper paths to absolute paths in .md files
+ * Usage: bun run deploy:skills
  */
 
 import { homedir } from "os";
 import { join, resolve } from "path";
-import { Glob } from "bun";
 
 const home = homedir();
 const repoRoot = resolve(import.meta.dir, "..");
-const sourceDir = join(repoRoot, ".claude", "skills");
-const targetDir = join(home, ".claude", "skills");
+const sourceDir = join(repoRoot, ".claude", "skills", "mission");
+const targetDir = join(home, ".claude", "skills", "mission");
+const oldTargetDir = join(home, ".claude", "skills");
 
-// Relative path used in source .md files
-const RELATIVE_HELPER_PATH = ".claude/skills/mission-helper.ts";
-// Absolute path for deployed .md files
-const ABSOLUTE_HELPER_PATH = join(targetDir, "mission-helper.ts");
+// Old skill files to clean up (flat files from previous format)
+const OLD_FILES = [
+  "mission.md",
+  "mission-helper.ts",
+  "mission-list.md",
+  "mission-create.md",
+  "mission-claim.md",
+  "mission-status.md",
+  "mission-complete.md",
+  "mission-release.md",
+  "mission-review.md",
+];
 
 async function main() {
   // Ensure target directory exists
   await Bun.$`mkdir -p ${targetDir}`.quiet();
 
-  const copied: string[] = [];
+  // Copy SKILL.md
+  const source = join(sourceDir, "SKILL.md");
+  const target = join(targetDir, "SKILL.md");
+  const file = Bun.file(source);
 
-  // Copy mission-helper.ts
-  const helperSource = join(sourceDir, "mission-helper.ts");
-  const helperTarget = join(targetDir, "mission-helper.ts");
-  const helperFile = Bun.file(helperSource);
-
-  if (await helperFile.exists()) {
-    await Bun.write(helperTarget, helperFile);
-    copied.push("mission-helper.ts");
-  } else {
-    console.error(`Warning: ${helperSource} not found, skipping.`);
+  if (!(await file.exists())) {
+    console.error(`Error: ${source} not found`);
+    process.exit(1);
   }
 
-  // Copy all .md files, rewriting helper paths
-  const glob = new Glob("*.md");
-  for await (const filename of glob.scan({ cwd: sourceDir })) {
-    const sourcePath = join(sourceDir, filename);
-    const targetPath = join(targetDir, filename);
+  await Bun.write(target, file);
+  console.log(`\nDeployed mission skill to ${targetDir}\n`);
 
-    let content = await Bun.file(sourcePath).text();
-
-    // Replace relative helper path with absolute path
-    content = content.replaceAll(RELATIVE_HELPER_PATH, ABSOLUTE_HELPER_PATH);
-
-    await Bun.write(targetPath, content);
-    copied.push(filename);
+  // Clean up old flat skill files if they exist
+  const removed: string[] = [];
+  for (const oldFile of OLD_FILES) {
+    const oldPath = join(oldTargetDir, oldFile);
+    const oldBunFile = Bun.file(oldPath);
+    if (await oldBunFile.exists()) {
+      await Bun.$`rm ${oldPath}`.quiet();
+      removed.push(oldFile);
+    }
   }
 
-  // Print summary
-  console.log(`\nDeployed ${copied.length} file(s) to ${targetDir}:\n`);
-  for (const file of copied) {
-    console.log(`  - ${file}`);
+  if (removed.length > 0) {
+    console.log(`Cleaned up ${removed.length} old skill file(s):`);
+    for (const file of removed) {
+      console.log(`  - ${file}`);
+    }
+    console.log();
   }
-  console.log();
 }
 
 main().catch((err) => {
