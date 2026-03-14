@@ -81,7 +81,7 @@ export function AgentReasoningTimeline({
     return (
       <div style={emptyStyle}>
         <span style={emptyIconStyle}>○</span>
-        No activity recorded
+        <span data-testid="activity-history-empty">No activity recorded</span>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export function AgentReasoningTimeline({
   );
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} data-testid="activity-history-list">
       <div style={timelineStyle}>
         {sortedLogs.map((log) => {
           const hasReasoning = log.reason !== null || log.transcript !== null;

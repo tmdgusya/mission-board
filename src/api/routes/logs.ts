@@ -51,9 +51,9 @@ logsRouter.get("/", async (c) => {
       taskId: log.taskId,
       agentId: log.agentId,
       action: log.action,
-      details: log.details,
+      details: log.details ? JSON.parse(log.details) : null,
       reason: log.reason,
-      transcript: log.transcript,
+      transcript: log.transcript ? JSON.parse(log.transcript) : null,
       createdAt: log.createdAt,
     }));
 

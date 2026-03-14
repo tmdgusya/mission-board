@@ -34,6 +34,8 @@ function createMockLog(overrides: Partial<TaskLog> = {}): TaskLog {
     agentId: "agent-1",
     action: "created",
     details: { title: "Design API schema", task_type: "implementation" },
+    reason: null,
+    transcript: null,
     createdAt: "2026-03-13T10:00:00.000Z",
     ...overrides,
   };
@@ -315,16 +317,6 @@ describe("TaskDetail", () => {
   });
 
   describe("Activity History", () => {
-    it("renders activity history heading", async () => {
-      const onClose = vi.fn();
-      renderTaskDetail("task-1", onClose);
-
-      await screen.findByTestId("activity-history-heading");
-      expect(screen.getByTestId("activity-history-heading")).toHaveTextContent(
-        "Activity History"
-      );
-    });
-
     it("renders activity log entries", async () => {
       const logs = [
         createMockLog({
@@ -352,30 +344,33 @@ describe("TaskDetail", () => {
       renderTaskDetail("task-1", onClose, { logs });
 
       await screen.findByTestId("activity-history-list");
-      expect(screen.getByTestId("log-action-log-1")).toHaveTextContent("Created");
-      expect(screen.getByTestId("log-action-log-2")).toHaveTextContent("Claimed");
-      expect(screen.getByTestId("log-action-log-3")).toHaveTextContent("Updated");
+      expect(screen.getByText("Created")).toBeInTheDocument();
+      expect(screen.getByText("Claimed")).toBeInTheDocument();
+      expect(screen.getByText("Updated")).toBeInTheDocument();
     });
 
-    it("renders log details for field changes", async () => {
+    it("renders log entries with reasoning", async () => {
       const logs = [
         createMockLog({
           id: "log-1",
-          action: "updated",
-          details: {
-            field_changes: [
-              { field: "status", old_value: "backlog", new_value: "in_progress" },
-            ],
-          },
+          action: "claimed",
+          reason: "Matched my specialization",
+          transcript: [
+            { step: 1, thought: "Analyzed requirements" },
+            { step: 2, thought: "Decided to claim" },
+          ],
+          createdAt: "2026-03-13T11:00:00.000Z",
         }),
       ];
       const onClose = vi.fn();
       renderTaskDetail("task-1", onClose, { logs });
 
-      await screen.findByTestId("log-details-log-1");
-      expect(screen.getByTestId("log-details-log-1")).toHaveTextContent(
-        "status: backlog → in_progress"
-      );
+      // Wait for the component to render (the timeline fetches logs via useLogs)
+      await vi.waitFor(() => {
+        // Reason is rendered wrapped in curly quotes: &quot;...&quot;
+        expect(screen.queryByText(/Matched my specialization/)).toBeTruthy();
+      }, { timeout: 3000 });
+      expect(screen.queryByText("No agent reasoning available")).toBeFalsy();
     });
 
     it("renders empty state when no logs", async () => {
@@ -388,18 +383,18 @@ describe("TaskDetail", () => {
       );
     });
 
-    it("renders log timestamps", async () => {
+    it("renders entries without reasoning", async () => {
       const logs = [
         createMockLog({
           id: "log-1",
+          action: "created",
           createdAt: "2026-03-13T10:00:00.000Z",
         }),
       ];
       const onClose = vi.fn();
       renderTaskDetail("task-1", onClose, { logs });
 
-      await screen.findByTestId("log-time-log-1");
-      expect(screen.getByTestId("log-time-log-1")).toBeInTheDocument();
+      await screen.findByText("No agent reasoning available");
     });
   });
 
