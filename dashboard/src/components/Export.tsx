@@ -196,9 +196,10 @@ export function ExportButtons({
       <span
         data-testid="export-count"
         style={{
-          fontSize: "13px",
-          color: "#64748b",
+          fontSize: "12px",
+          color: "#555555",
           marginRight: "4px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         }}
       >
         {tasks.length} task{tasks.length !== 1 ? "s" : ""}
@@ -211,31 +212,34 @@ export function ExportButtons({
         title="Export tasks as CSV"
         style={{
           padding: "6px 14px",
-          borderRadius: "6px",
-          border: "1px solid #334155",
-          backgroundColor: isDisabled ? "#1e293b" : "#334155",
-          color: isDisabled ? "#475569" : "#e2e8f0",
-          fontSize: "13px",
+          borderRadius: "4px",
+          border: `1px solid ${isDisabled ? "#333333" : "#00ffcc"}`,
+          backgroundColor: "transparent",
+          color: isDisabled ? "#333333" : "#00ffcc",
+          fontSize: "12px",
           fontWeight: 500,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
           cursor: isDisabled ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           gap: "4px",
           opacity: isDisabled ? 0.5 : 1,
-          transition: "background-color 0.2s, opacity 0.2s",
+          transition: "all 0.2s",
         }}
         onMouseEnter={(e) => {
           if (!isDisabled) {
-            e.currentTarget.style.backgroundColor = "#475569";
+            e.currentTarget.style.boxShadow = "0 0 12px rgba(0,255,204,0.3)";
+            e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
           }
         }}
         onMouseLeave={(e) => {
-          if (!isDisabled) {
-            e.currentTarget.style.backgroundColor = "#334155";
-          }
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = "transparent";
         }}
       >
-        📄 CSV
+        CSV
       </button>
       <button
         data-testid="export-json-button"
@@ -245,31 +249,34 @@ export function ExportButtons({
         title="Export tasks as JSON"
         style={{
           padding: "6px 14px",
-          borderRadius: "6px",
-          border: "1px solid #334155",
-          backgroundColor: isDisabled ? "#1e293b" : "#334155",
-          color: isDisabled ? "#475569" : "#e2e8f0",
-          fontSize: "13px",
+          borderRadius: "4px",
+          border: `1px solid ${isDisabled ? "#333333" : "#00ffcc"}`,
+          backgroundColor: "transparent",
+          color: isDisabled ? "#333333" : "#00ffcc",
+          fontSize: "12px",
           fontWeight: 500,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
           cursor: isDisabled ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           gap: "4px",
           opacity: isDisabled ? 0.5 : 1,
-          transition: "background-color 0.2s, opacity 0.2s",
+          transition: "all 0.2s",
         }}
         onMouseEnter={(e) => {
           if (!isDisabled) {
-            e.currentTarget.style.backgroundColor = "#475569";
+            e.currentTarget.style.boxShadow = "0 0 12px rgba(0,255,204,0.3)";
+            e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
           }
         }}
         onMouseLeave={(e) => {
-          if (!isDisabled) {
-            e.currentTarget.style.backgroundColor = "#334155";
-          }
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = "transparent";
         }}
       >
-        📋 JSON
+        JSON
       </button>
     </div>
   );

@@ -115,14 +115,21 @@ export function DashboardContent(): React.ReactElement {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "16px",
+          paddingBottom: "12px",
+          borderBottom: "1px solid rgba(0,255,204,0.2)",
+          boxShadow: "0 1px 8px rgba(0,255,204,0.05)",
         }}
       >
         <h1
           style={{
             fontSize: "24px",
             fontWeight: 700,
-            color: "#f1f5f9",
+            color: "#00ffcc",
             margin: 0,
+            textTransform: "uppercase",
+            letterSpacing: "0.15em",
+            textShadow: "0 0 10px rgba(0,255,204,0.5)",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
           }}
         >
           Mission Board
@@ -133,59 +140,69 @@ export function DashboardContent(): React.ReactElement {
             onClick={handleNavigateToAnalytics}
             style={{
               padding: "8px 16px",
-              borderRadius: "6px",
+              borderRadius: "2px",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
-              border: "1px solid #3b82f644",
-              backgroundColor: "#1e293b",
-              color: "#60a5fa",
+              border: "1px solid rgba(0,255,204,0.15)",
+              backgroundColor: "transparent",
+              color: "#555555",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1e293b";
-              e.currentTarget.style.borderColor = "#3b82f688";
+              e.currentTarget.style.color = "#00ffcc";
+              e.currentTarget.style.borderColor = "rgba(0,255,204,0.4)";
+              e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,204,0.1)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#1e293b";
-              e.currentTarget.style.borderColor = "#3b82f644";
+              e.currentTarget.style.color = "#555555";
+              e.currentTarget.style.borderColor = "rgba(0,255,204,0.15)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
-            📈 Analytics
+            Analytics
           </button>
           <button
             data-testid="approval-queue-nav-button"
             onClick={handleNavigateToApprovals}
             style={{
               padding: "8px 16px",
-              borderRadius: "6px",
+              borderRadius: "2px",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
-              border: "1px solid #f59e0b44",
-              backgroundColor: pendingCount > 0 ? "#f59e0b22" : "#1e293b",
-              color: pendingCount > 0 ? "#f59e0b" : "#94a3b8",
+              border: `1px solid ${pendingCount > 0 ? "rgba(255,170,0,0.3)" : "rgba(0,255,204,0.15)"}`,
+              backgroundColor: pendingCount > 0 ? "rgba(255,170,0,0.1)" : "transparent",
+              color: pendingCount > 0 ? "#ffaa00" : "#555555",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = pendingCount > 0 ? "#f59e0b33" : "#334155";
+              e.currentTarget.style.color = pendingCount > 0 ? "#ffaa00" : "#00ffcc";
+              e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,204,0.1)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = pendingCount > 0 ? "#f59e0b22" : "#1e293b";
+              e.currentTarget.style.color = pendingCount > 0 ? "#ffaa00" : "#555555";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
-            🔔 Approvals
+            Approvals
             {pendingCount > 0 && (
               <span
                 style={{
-                  backgroundColor: "#f59e0b",
+                  backgroundColor: "#ffaa00",
                   color: "#000",
                   padding: "1px 6px",
-                  borderRadius: "10px",
+                  borderRadius: "2px",
                   fontSize: "11px",
                   fontWeight: 600,
                 }}
@@ -199,22 +216,29 @@ export function DashboardContent(): React.ReactElement {
             onClick={handleOpenCreateProjectForm}
             style={{
               padding: "8px 16px",
-              borderRadius: "6px",
+              borderRadius: "2px",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
-              border: "1px solid #3b82f644",
-              backgroundColor: "#1e293b",
-              color: "#60a5fa",
+              border: "1px solid rgba(0,255,204,0.15)",
+              backgroundColor: "transparent",
+              color: "#555555",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#334155";
+              e.currentTarget.style.color = "#00ffcc";
+              e.currentTarget.style.borderColor = "rgba(0,255,204,0.4)";
+              e.currentTarget.style.boxShadow = "0 0 8px rgba(0,255,204,0.1)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#1e293b";
+              e.currentTarget.style.color = "#555555";
+              e.currentTarget.style.borderColor = "rgba(0,255,204,0.15)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
             + New Project
@@ -224,22 +248,27 @@ export function DashboardContent(): React.ReactElement {
             onClick={handleOpenCreateForm}
             style={{
               padding: "8px 16px",
-              borderRadius: "6px",
+              borderRadius: "2px",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
-              border: "1px solid transparent",
-              backgroundColor: "#22c55e",
-              color: "white",
+              border: "1px solid rgba(0,255,102,0.3)",
+              backgroundColor: "rgba(0,255,102,0.1)",
+              color: "#00ff66",
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#16a34a";
+              e.currentTarget.style.backgroundColor = "rgba(0,255,102,0.2)";
+              e.currentTarget.style.boxShadow = "0 0 12px rgba(0,255,102,0.2)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#22c55e";
+              e.currentTarget.style.backgroundColor = "rgba(0,255,102,0.1)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
             + New Task

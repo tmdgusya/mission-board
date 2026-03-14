@@ -33,25 +33,27 @@ function ToastItem({
     return () => clearTimeout(timer);
   }, [toast.id, onDismiss]);
 
-  const bgColor =
+  const accentColor =
     toast.type === "error"
-      ? "#dc2626"
+      ? "#ff3333"
       : toast.type === "success"
-        ? "#16a34a"
-        : "#2563eb";
+        ? "#00ff66"
+        : "#00ffcc";
 
   return (
     <div
       role="alert"
       style={{
-        backgroundColor: bgColor,
-        color: "white",
+        backgroundColor: "#0a0a0a",
+        color: "#c0c0c0",
         padding: "12px 16px",
-        borderRadius: "8px",
+        borderRadius: "4px",
         fontSize: "14px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        borderLeft: `3px solid ${accentColor}`,
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(-10px)",
+        transform: isVisible ? "translateX(0)" : "translateX(20px)",
         transition: "opacity 0.3s, transform 0.3s",
         maxWidth: "400px",
         display: "flex",
@@ -69,7 +71,7 @@ function ToastItem({
         style={{
           background: "none",
           border: "none",
-          color: "white",
+          color: "#555555",
           cursor: "pointer",
           fontSize: "16px",
           padding: "0 4px",

@@ -71,13 +71,14 @@ function ApprovalLoadingState(): React.ReactElement {
         style={{
           width: "48px",
           height: "48px",
-          border: "4px solid #334155",
-          borderTopColor: "#3b82f6",
+          border: "2px solid rgba(0,255,204,0.15)",
+          borderTopColor: "#00ffcc",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",
+          boxShadow: "0 0 15px rgba(0,255,204,0.2)",
         }}
       />
-      <span style={{ color: "#94a3b8", fontSize: "14px" }}>
+      <span style={{ color: "#555555", fontSize: "14px", fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "2px" }}>
         Loading approvals...
       </span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -116,29 +117,32 @@ function ApprovalErrorState({
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          backgroundColor: "#ef444420",
+          backgroundColor: "rgba(255,51,51,0.1)",
+          border: "1px solid rgba(255,51,51,0.3)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: "28px",
-          color: "#ef4444",
+          color: "#ff3333",
           flexShrink: 0,
+          boxShadow: "0 0 20px rgba(255,51,51,0.15)",
         }}
         aria-hidden="true"
       >
         ⚠
       </div>
-      <h2 style={{ color: "#ef4444", fontSize: "20px", fontWeight: 700, margin: 0 }}>
+      <h2 style={{ color: "#ff3333", fontSize: "20px", fontWeight: 700, margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "1px" }}>
         Error Loading Approvals
       </h2>
       <p
         style={{
-          color: "#94a3b8",
+          color: "#555555",
           textAlign: "center",
           maxWidth: "420px",
           lineHeight: 1.5,
           margin: 0,
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', monospace",
         }}
       >
         {message}
@@ -149,21 +153,26 @@ function ApprovalErrorState({
         aria-label="Retry loading approvals"
         style={{
           padding: "10px 28px",
-          backgroundColor: "#3b82f6",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
+          backgroundColor: "transparent",
+          color: "#00ffcc",
+          border: "1px solid #00ffcc",
+          borderRadius: "4px",
           cursor: "pointer",
           fontSize: "14px",
           fontWeight: 500,
-          transition: "background-color 0.2s",
+          fontFamily: "'JetBrains Mono', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          transition: "all 0.2s",
           marginTop: "4px",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#2563eb";
+          e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,204,0.3)";
+          e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#3b82f6";
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = "transparent";
         }}
       >
         Retry
@@ -197,28 +206,31 @@ function ApprovalEmptyState(): React.ReactElement {
           width: "72px",
           height: "72px",
           borderRadius: "50%",
-          backgroundColor: "#1e293b",
+          backgroundColor: "rgba(0,255,204,0.05)",
+          border: "1px solid rgba(0,255,204,0.15)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: "32px",
           flexShrink: 0,
+          color: "#00ffcc",
         }}
         aria-hidden="true"
       >
-        ✅
+        -
       </div>
-      <h2 style={{ color: "#e2e8f0", fontSize: "18px", fontWeight: 600, margin: 0 }}>
+      <h2 style={{ color: "#555555", fontSize: "18px", fontWeight: 600, margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "3px" }}>
         No Pending Approvals
       </h2>
       <p
         style={{
-          color: "#94a3b8",
+          color: "#444444",
           textAlign: "center",
           maxWidth: "400px",
           lineHeight: 1.5,
           margin: 0,
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', monospace",
         }}
       >
         All approval requests have been processed. New requests will appear here when agents submit them.
@@ -233,29 +245,51 @@ function ApprovalEmptyState(): React.ReactElement {
 
 function StatusBadge({ status }: { status: ApprovalRequest["status"] }): React.ReactElement {
   const colors: Record<ApprovalRequest["status"], { bg: string; color: string; border: string }> = {
-    pending: { bg: "rgba(245, 158, 11, 0.133)", color: "#f59e0b", border: "rgba(245, 158, 11, 0.267)" },
-    approved: { bg: "rgba(34, 197, 94, 0.133)", color: "#22c55e", border: "rgba(34, 197, 94, 0.267)" },
-    denied: { bg: "rgba(239, 68, 68, 0.133)", color: "#ef4444", border: "rgba(239, 68, 68, 0.267)" },
+    pending: { bg: "rgba(255, 170, 0, 0.1)", color: "#ffaa00", border: "rgba(255, 170, 0, 0.25)" },
+    approved: { bg: "rgba(0, 255, 102, 0.1)", color: "#00ff66", border: "rgba(0, 255, 102, 0.25)" },
+    denied: { bg: "rgba(255, 51, 51, 0.1)", color: "#ff3333", border: "rgba(255, 51, 51, 0.25)" },
   };
 
   const c = colors[status];
   const label = status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
-    <span
-      style={{
-        fontSize: "12px",
-        fontWeight: 500,
-        backgroundColor: c.bg,
-        color: c.color,
-        padding: "2px 8px",
-        borderRadius: "4px",
-        border: `1px solid ${c.border}`,
-        textTransform: "capitalize",
-      }}
-    >
-      {label}
-    </span>
+    <>
+      <span
+        style={{
+          fontSize: "11px",
+          fontWeight: 500,
+          backgroundColor: c.bg,
+          color: c.color,
+          padding: "2px 8px",
+          borderRadius: "4px",
+          border: `1px solid ${c.border}`,
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        {status === "pending" && (
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              backgroundColor: "#ffaa00",
+              display: "inline-block",
+              animation: "pulseAmber 1.5s ease-in-out infinite",
+            }}
+          />
+        )}
+        {label}
+      </span>
+      {status === "pending" && (
+        <style>{`@keyframes pulseAmber { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,170,0,0.4); } 50% { opacity: 0.5; box-shadow: 0 0 0 4px rgba(255,170,0,0); } }`}</style>
+      )}
+    </>
   );
 }
 
@@ -287,19 +321,22 @@ function DenyForm({
       style={{
         marginTop: "12px",
         padding: "12px",
-        backgroundColor: "#0f172a",
-        borderRadius: "6px",
-        border: "1px solid #334155",
+        backgroundColor: "#050505",
+        borderRadius: "4px",
+        border: "1px solid rgba(0,255,204,0.1)",
       }}
     >
       <label
         htmlFor={`deny-notes-${approvalId}`}
         style={{
           display: "block",
-          fontSize: "13px",
+          fontSize: "11px",
           fontWeight: 500,
-          color: "#e2e8f0",
+          color: "#555555",
           marginBottom: "8px",
+          fontFamily: "'JetBrains Mono', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
         }}
       >
         Notes (required):
@@ -314,21 +351,21 @@ function DenyForm({
         style={{
           width: "100%",
           padding: "8px 12px",
-          borderRadius: "6px",
-          border: "1px solid #334155",
-          backgroundColor: "#1e293b",
-          color: "#e2e8f0",
+          borderRadius: "4px",
+          border: "1px solid #333333",
+          backgroundColor: "#000000",
+          color: "#c0c0c0",
           fontSize: "13px",
           resize: "vertical",
-          fontFamily: "inherit",
+          fontFamily: "'JetBrains Mono', monospace",
           outline: "none",
           boxSizing: "border-box",
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#3b82f6";
+          e.currentTarget.style.borderColor = "#00ffcc";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#334155";
+          e.currentTarget.style.borderColor = "#333333";
         }}
       />
       {validationError && (
@@ -451,9 +488,9 @@ function ApprovalItem({
       data-testid={`approval-item-${approval.id}`}
       role="listitem"
       style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: "8px",
+        backgroundColor: "#0a0a0a",
+        border: "1px solid rgba(0,255,204,0.12)",
+        borderRadius: "4px",
         padding: "16px",
       }}
     >
@@ -470,8 +507,9 @@ function ApprovalItem({
           style={{
             fontSize: "16px",
             fontWeight: 600,
-            color: "#f1f5f9",
+            color: "#c0c0c0",
             margin: 0,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
           }}
         >
           {taskTitle}
@@ -490,28 +528,28 @@ function ApprovalItem({
         }}
       >
         <div style={{ display: "flex", gap: "8px" }}>
-          <span style={{ color: "#94a3b8", minWidth: "80px" }}>
+          <span style={{ color: "#555555", minWidth: "80px", fontFamily: "'JetBrains Mono', monospace" }}>
             Agent:
           </span>
-          <span style={{ color: "#e2e8f0", fontWeight: 500 }}>
+          <span style={{ color: "#c0c0c0", fontWeight: 500, fontFamily: "'JetBrains Mono', monospace" }}>
             {agentName}
           </span>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
-          <span style={{ color: "#94a3b8", minWidth: "80px" }}>
+          <span style={{ color: "#555555", minWidth: "80px", fontFamily: "'JetBrains Mono', monospace" }}>
             Action:
           </span>
-          <span style={{ color: "#e2e8f0" }}>
+          <span style={{ color: "#c0c0c0", fontFamily: "'JetBrains Mono', monospace" }}>
             {approval.actionRequested}
           </span>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
-          <span style={{ color: "#94a3b8", minWidth: "80px" }}>
+          <span style={{ color: "#555555", minWidth: "80px", fontFamily: "'JetBrains Mono', monospace" }}>
             Requested:
           </span>
           <span
             data-testid="approval-timestamp"
-            style={{ color: "#e2e8f0" }}
+            style={{ color: "#c0c0c0", fontFamily: "'JetBrains Mono', monospace" }}
           >
             {formatTimestamp(approval.createdAt)}
           </span>
@@ -535,21 +573,28 @@ function ApprovalItem({
               disabled={isApproving || isDenying}
               style={{
                 padding: "6px 14px",
-                borderRadius: "6px",
+                borderRadius: "4px",
                 fontSize: "13px",
                 fontWeight: 500,
+                fontFamily: "'JetBrains Mono', monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
                 cursor: isApproving || isDenying ? "not-allowed" : "pointer",
-                border: "1px solid rgba(220, 38, 38, 0.267)",
-                backgroundColor: "rgba(220, 38, 38, 0.133)",
-                color: "#f87171",
+                border: "1px solid #ff3333",
+                backgroundColor: "transparent",
+                color: "#ff3333",
                 opacity: isApproving || isDenying ? 0.5 : 1,
+                transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                if (!isApproving && !isDenying)
-                  e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.2)";
+                if (!isApproving && !isDenying) {
+                  e.currentTarget.style.boxShadow = "0 0 12px rgba(255,51,51,0.3)";
+                  e.currentTarget.style.backgroundColor = "rgba(255,51,51,0.05)";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.133)";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
               Deny
@@ -561,21 +606,28 @@ function ApprovalItem({
               disabled={isApproving || isDenying}
               style={{
                 padding: "6px 14px",
-                borderRadius: "6px",
+                borderRadius: "4px",
                 fontSize: "13px",
                 fontWeight: 500,
+                fontFamily: "'JetBrains Mono', monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
                 cursor: isApproving || isDenying ? "not-allowed" : "pointer",
-                border: "none",
-                backgroundColor: "#16a34a",
-                color: "white",
+                border: "1px solid #00ff66",
+                backgroundColor: "transparent",
+                color: "#00ff66",
                 opacity: isApproving || isDenying ? 0.5 : 1,
+                transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                if (!isApproving && !isDenying)
-                  e.currentTarget.style.backgroundColor = "#15803d";
+                if (!isApproving && !isDenying) {
+                  e.currentTarget.style.boxShadow = "0 0 12px rgba(0,255,102,0.3)";
+                  e.currentTarget.style.backgroundColor = "rgba(0,255,102,0.05)";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#16a34a";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
               {isApproving ? "Approving..." : "Approve"}
@@ -669,7 +721,7 @@ export function ApprovalQueue({ onBack }: ApprovalQueueProps): React.ReactElemen
         >
           <h1
             data-testid="approval-queue-header"
-            style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}
+            style={{ fontSize: "20px", fontWeight: 700, color: "#00ffcc", margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" as const, letterSpacing: "2px" }}
           >
             Approval Queue
           </h1>
@@ -693,7 +745,7 @@ export function ApprovalQueue({ onBack }: ApprovalQueueProps): React.ReactElemen
         >
           <h1
             data-testid="approval-queue-header"
-            style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}
+            style={{ fontSize: "20px", fontWeight: 700, color: "#00ffcc", margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" as const, letterSpacing: "2px" }}
           >
             Approval Queue
           </h1>
@@ -724,29 +776,32 @@ export function ApprovalQueue({ onBack }: ApprovalQueueProps): React.ReactElemen
             onClick={onBack}
             style={{
               padding: "6px 12px",
-              borderRadius: "6px",
+              borderRadius: "4px",
               fontSize: "13px",
               fontWeight: 500,
               cursor: "pointer",
-              border: "1px solid #475569",
+              border: "1px solid #333333",
               backgroundColor: "transparent",
-              color: "#94a3b8",
+              color: "#555555",
+              fontFamily: "'JetBrains Mono', monospace",
               display: "flex",
               alignItems: "center",
               gap: "6px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1e293b";
+              e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.03)";
+              e.currentTarget.style.borderColor = "rgba(0,255,204,0.3)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.borderColor = "#333333";
             }}
           >
             ← Back
           </button>
           <h1
             data-testid="approval-queue-header"
-            style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}
+            style={{ fontSize: "20px", fontWeight: 700, color: "#00ffcc", margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase" as const, letterSpacing: "2px" }}
           >
             Approval Queue
           </h1>
@@ -754,11 +809,15 @@ export function ApprovalQueue({ onBack }: ApprovalQueueProps): React.ReactElemen
         <span
           data-testid="pending-count"
           style={{
-            fontSize: "14px",
-            color: "#94a3b8",
-            backgroundColor: "#1e293b",
+            fontSize: "12px",
+            color: "#ffaa00",
+            backgroundColor: "rgba(255,170,0,0.1)",
+            border: "1px solid rgba(255,170,0,0.2)",
             padding: "4px 12px",
-            borderRadius: "12px",
+            borderRadius: "4px",
+            fontFamily: "'JetBrains Mono', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
           }}
         >
           {approvals.length} pending

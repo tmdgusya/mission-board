@@ -25,12 +25,12 @@ export function KanbanColumn({
   });
 
   const columnStyle: React.CSSProperties = {
-    backgroundColor: isOver ? "#1a2332" : "#0f172a",
-    borderRadius: "8px",
+    backgroundColor: isOver ? "rgba(0,255,204,0.04)" : "rgba(0,255,204,0.02)",
+    borderRadius: "2px",
     padding: isMobile ? "12px" : "16px",
     minWidth: isMobile ? "auto" : "280px",
     flex: isMobile ? undefined : 1,
-    border: `1px solid ${isOver ? STATUS_COLORS[status] : "#1e293b"}`,
+    border: `1px solid ${isOver ? "rgba(0,255,204,0.2)" : "rgba(0,255,204,0.08)"}`,
     transition: "border-color 0.2s, background-color 0.2s",
   };
 
@@ -43,11 +43,18 @@ export function KanbanColumn({
           justifyContent: "space-between",
           marginBottom: "12px",
           paddingBottom: "8px",
-          borderBottom: `2px solid ${STATUS_COLORS[status]}`,
+          borderBottom: "1px solid rgba(0,255,204,0.1)",
         }}
       >
         <h3
-          style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}
+          style={{
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "rgba(0,255,204,0.6)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+          }}
           data-testid={`column-header-${status}`}
         >
           {STATUS_LABELS[status]}
@@ -55,10 +62,11 @@ export function KanbanColumn({
         <span
           style={{
             fontSize: "12px",
-            backgroundColor: "#1e293b",
+            backgroundColor: "rgba(0,255,204,0.08)",
             padding: "2px 8px",
-            borderRadius: "12px",
-            color: "#94a3b8",
+            borderRadius: "2px",
+            color: "#555555",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
           }}
           data-testid={`column-count-${status}`}
         >
@@ -70,9 +78,10 @@ export function KanbanColumn({
           <div
             style={{
               textAlign: "center",
-              color: "#475569",
+              color: "#555555",
               fontSize: "13px",
               padding: "20px 0",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
             }}
             data-testid={`column-empty-${status}`}
           >

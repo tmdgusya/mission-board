@@ -163,8 +163,8 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               style={{
                 width: "32px",
                 height: "32px",
-                border: "3px solid #334155",
-                borderTopColor: "#3b82f6",
+                border: "3px solid #333",
+                borderTopColor: "#00ffcc",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
               }}
@@ -189,7 +189,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
       >
         <div style={modalStyle}>
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <div style={{ color: "#ef4444", fontSize: "16px", marginBottom: "8px" }}>
+            <div style={{ color: "#ef4444", fontSize: "16px", marginBottom: "8px", fontFamily: "monospace" }}>
               Error loading task
             </div>
             <button
@@ -226,7 +226,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
             alignItems: "flex-start",
             marginBottom: "20px",
             paddingBottom: "16px",
-            borderBottom: "1px solid #1e293b",
+            borderBottom: "1px solid rgba(0,255,204,0.1)",
           }}
         >
           <div style={{ flex: 1, marginRight: "16px" }}>
@@ -249,8 +249,9 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                 style={{
                   fontSize: "18px",
                   fontWeight: 600,
-                  color: "#f1f5f9",
+                  color: "#e2e8f0",
                   marginBottom: "8px",
+                  fontFamily: "monospace",
                 }}
                 data-testid="task-detail-title"
               >
@@ -263,11 +264,12 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
             style={{
               background: "none",
               border: "none",
-              color: "#94a3b8",
+              color: "#64748b",
               cursor: "pointer",
               fontSize: "20px",
               padding: "4px 8px",
               lineHeight: 1,
+              fontFamily: "monospace",
             }}
             aria-label="Close"
             data-testid="task-detail-close"
@@ -287,6 +289,8 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               backgroundColor: `${STATUS_COLORS[task.status as TaskStatus]}20`,
               color: STATUS_COLORS[task.status as TaskStatus],
               fontWeight: 500,
+              boxShadow: `0 0 4px ${STATUS_COLORS[task.status as TaskStatus]}`,
+              fontFamily: "monospace",
             }}
           >
             {STATUS_LABELS[task.status as TaskStatus]}
@@ -297,8 +301,9 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               fontSize: "12px",
               padding: "4px 10px",
               borderRadius: "12px",
-              backgroundColor: "#334155",
-              color: "#94a3b8",
+              backgroundColor: "rgba(0,255,204,0.05)",
+              color: "#64748b",
+              fontFamily: "monospace",
             }}
           >
             {task.taskType.replace("_", " ")}
@@ -312,6 +317,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                 borderRadius: "12px",
                 backgroundColor: "#f59e0b20",
                 color: "#f59e0b",
+                fontFamily: "monospace",
               }}
             >
               Approval Required
@@ -321,15 +327,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
 
         {/* Description */}
         <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              fontSize: "12px",
-              color: "#64748b",
-              fontWeight: 500,
-              display: "block",
-              marginBottom: "6px",
-            }}
-          >
+          <label style={sectionHeaderStyle}>
             Description
           </label>
           {isEditing ? (
@@ -341,7 +339,6 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                 ...inputStyle,
                 minHeight: "100px",
                 resize: "vertical",
-                fontFamily: "inherit",
               }}
             />
           ) : (
@@ -349,9 +346,10 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               data-testid="task-detail-description"
               style={{
                 fontSize: "14px",
-                color: "#cbd5e1",
+                color: "#94a3b8",
                 lineHeight: 1.5,
                 whiteSpace: "pre-wrap",
+                fontFamily: "monospace",
               }}
             >
               {task.description || "No description provided"}
@@ -367,8 +365,9 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
             gap: "16px",
             marginBottom: "20px",
             padding: "16px",
-            backgroundColor: "#0f172a",
+            backgroundColor: "#000",
             borderRadius: "8px",
+            border: "1px solid rgba(0,255,204,0.08)",
           }}
         >
           <div>
@@ -379,7 +378,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
           </div>
           <div>
             <label style={labelStyle}>Assigned Agent</label>
-            <p data-testid="task-detail-agent" style={valueStyle}>
+            <p data-testid="task-detail-agent" style={{ ...valueStyle, color: agent ? "#00ff66" : "#64748b" }}>
               {agent ? agent.name : "Unclaimed"}
             </p>
           </div>
@@ -412,24 +411,19 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
         {/* Activity History */}
         <div style={{ marginBottom: "20px" }}>
           <h3
-            style={{
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "#e2e8f0",
-              marginBottom: "12px",
-            }}
+            style={sectionHeaderStyle}
             data-testid="activity-history-heading"
           >
             Activity History
           </h3>
           {logsLoading ? (
-            <div style={{ color: "#64748b", fontSize: "13px" }}>
+            <div style={{ color: "#64748b", fontSize: "13px", fontFamily: "monospace" }}>
               Loading activity...
             </div>
           ) : logs.length === 0 ? (
             <div
               data-testid="activity-history-empty"
-              style={{ color: "#475569", fontSize: "13px" }}
+              style={{ color: "#475569", fontSize: "13px", fontFamily: "monospace" }}
             >
               No activity recorded
             </div>
@@ -439,7 +433,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               style={{
                 maxHeight: "200px",
                 overflowY: "auto",
-                border: "1px solid #1e293b",
+                border: "1px solid rgba(0,255,204,0.08)",
                 borderRadius: "6px",
               }}
             >
@@ -455,7 +449,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                     data-testid={`activity-log-${log.id}`}
                     style={{
                       padding: "10px 12px",
-                      borderBottom: "1px solid #1e293b",
+                      borderBottom: "1px solid rgba(0,255,204,0.05)",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
@@ -478,20 +472,21 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                           fontWeight: 500,
                           color: getActionColor(log.action),
                           minWidth: "70px",
+                          fontFamily: "monospace",
                         }}
                       >
                         {formatAction(log.action)}
                       </span>
                       <span
                         data-testid={`log-details-${log.id}`}
-                        style={{ fontSize: "12px", color: "#94a3b8" }}
+                        style={{ fontSize: "12px", color: "#64748b", fontFamily: "monospace" }}
                       >
                         {formatLogDetails(log.action, log.details)}
                       </span>
                     </div>
                     <span
                       data-testid={`log-time-${log.id}`}
-                      style={{ fontSize: "11px", color: "#475569", whiteSpace: "nowrap" }}
+                      style={{ fontSize: "11px", color: "#475569", whiteSpace: "nowrap", fontFamily: "monospace" }}
                     >
                       {formatDate(log.createdAt)}
                     </span>
@@ -507,10 +502,10 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
             data-testid="delete-confirmation"
             style={{
               padding: "16px",
-              backgroundColor: "#450a0a",
+              backgroundColor: "rgba(69,10,10,0.5)",
               borderRadius: "8px",
               marginBottom: "16px",
-              border: "1px solid #dc2626",
+              border: "1px solid #ff3333",
             }}
           >
             <p
@@ -518,6 +513,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                 fontSize: "14px",
                 color: "#fca5a5",
                 marginBottom: "12px",
+                fontFamily: "monospace",
               }}
             >
               Are you sure you want to delete this task? This action cannot be undone.
@@ -529,7 +525,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                   ...buttonStyle,
                   backgroundColor: "transparent",
                   color: "#94a3b8",
-                  border: "1px solid #334155",
+                  border: "1px solid #333",
                 }}
                 data-testid="delete-cancel"
               >
@@ -538,11 +534,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               <button
                 onClick={handleDelete}
                 disabled={deleteTask.isPending}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#dc2626",
-                  border: "1px solid #dc2626",
-                }}
+                style={dangerButtonStyle}
                 data-testid="delete-confirm"
               >
                 {deleteTask.isPending ? "Deleting..." : "Delete Task"}
@@ -558,7 +550,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
             justifyContent: "flex-end",
             gap: "8px",
             paddingTop: "16px",
-            borderTop: "1px solid #1e293b",
+            borderTop: "1px solid rgba(0,255,204,0.1)",
           }}
         >
           {isEditing ? (
@@ -575,7 +567,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                   ...buttonStyle,
                   backgroundColor: "transparent",
                   color: "#94a3b8",
-                  border: "1px solid #334155",
+                  border: "1px solid #333",
                 }}
                 data-testid="edit-cancel"
               >
@@ -586,9 +578,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
                 disabled={updateTask.isPending || !editTitle.trim()}
                 style={{
                   ...buttonStyle,
-                  backgroundColor: editTitle.trim() ? "#22c55e" : "#1e293b",
-                  border: `1px solid ${editTitle.trim() ? "#22c55e" : "#334155"}`,
-                  color: editTitle.trim() ? "white" : "#475569",
+                  opacity: editTitle.trim() ? 1 : 0.4,
                   cursor: editTitle.trim() ? "pointer" : "not-allowed",
                 }}
                 data-testid="edit-save"
@@ -607,12 +597,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps): React.ReactEle
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "transparent",
-                  color: "#f87171",
-                  border: "1px solid #f87171",
-                }}
+                style={dangerButtonStyle}
                 data-testid="delete-button"
               >
                 Delete
@@ -663,7 +648,7 @@ const overlayStyle: React.CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  backgroundColor: "rgba(0, 10, 15, 0.85)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -671,26 +656,28 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-  backgroundColor: "#1e293b",
+  backgroundColor: "#0a0a0a",
   borderRadius: "12px",
-  border: "1px solid #334155",
+  border: "1px solid rgba(0,255,204,0.2)",
   width: "90%",
   maxWidth: "600px",
   maxHeight: "90vh",
   overflowY: "auto",
   padding: "24px",
-  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+  boxShadow: "0 0 30px rgba(0,255,204,0.05)",
+  fontFamily: "monospace",
 };
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "#0f172a",
+  backgroundColor: "#000",
   color: "#e2e8f0",
-  border: "1px solid #334155",
+  border: "1px solid #333",
   borderRadius: "6px",
   padding: "8px 12px",
   fontSize: "14px",
   outline: "none",
   width: "100%",
+  fontFamily: "monospace",
 };
 
 const buttonStyle: React.CSSProperties = {
@@ -699,22 +686,48 @@ const buttonStyle: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 500,
   cursor: "pointer",
-  border: "1px solid transparent",
-  backgroundColor: "#3b82f6",
-  color: "white",
+  border: "1px solid #00ffcc",
+  backgroundColor: "transparent",
+  color: "#00ffcc",
+  fontFamily: "monospace",
+};
+
+const dangerButtonStyle: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: "6px",
+  fontSize: "13px",
+  fontWeight: 500,
+  cursor: "pointer",
+  border: "1px solid #ff3333",
+  backgroundColor: "transparent",
+  color: "#ff3333",
+  fontFamily: "monospace",
+};
+
+const sectionHeaderStyle: React.CSSProperties = {
+  fontSize: "12px",
+  color: "rgba(0,255,204,0.5)",
+  fontWeight: 500,
+  display: "block",
+  marginBottom: "8px",
+  textTransform: "uppercase",
+  letterSpacing: "1.5px",
+  fontFamily: "monospace",
 };
 
 const labelStyle: React.CSSProperties = {
   fontSize: "11px",
-  color: "#64748b",
+  color: "rgba(0,255,204,0.4)",
   fontWeight: 500,
   display: "block",
   marginBottom: "4px",
   textTransform: "uppercase",
   letterSpacing: "0.5px",
+  fontFamily: "monospace",
 };
 
 const valueStyle: React.CSSProperties = {
   fontSize: "13px",
-  color: "#cbd5e1",
+  color: "#94a3b8",
+  fontFamily: "monospace",
 };

@@ -57,15 +57,16 @@ export function Filters({
   );
 
   const selectStyle: React.CSSProperties = {
-    backgroundColor: "#1e293b",
-    color: "#e2e8f0",
-    border: "1px solid #334155",
-    borderRadius: "6px",
+    backgroundColor: "#000000",
+    color: "#c0c0c0",
+    border: "1px solid #333333",
+    borderRadius: "2px",
     padding: "6px 10px",
     fontSize: "13px",
     outline: "none",
     minWidth: "140px",
     cursor: "pointer",
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
   };
 
   const inputStyle: React.CSSProperties = {
@@ -83,9 +84,9 @@ export function Filters({
         alignItems: "center",
         gap: "12px",
         padding: "12px 16px",
-        backgroundColor: "#0f172a",
-        borderRadius: "8px",
-        border: "1px solid #1e293b",
+        backgroundColor: "rgba(0,0,0,0.8)",
+        borderRadius: "2px",
+        border: "1px solid rgba(0,255,204,0.08)",
         marginBottom: "16px",
       }}
     >
@@ -93,7 +94,7 @@ export function Filters({
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         <label
           htmlFor="filter-project"
-          style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
+          style={{ fontSize: "11px", color: "#555555", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}
         >
           Project
         </label>
@@ -118,7 +119,7 @@ export function Filters({
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         <label
           htmlFor="filter-status"
-          style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
+          style={{ fontSize: "11px", color: "#555555", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}
         >
           Status
         </label>
@@ -143,7 +144,7 @@ export function Filters({
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         <label
           htmlFor="filter-agent"
-          style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
+          style={{ fontSize: "11px", color: "#555555", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}
         >
           Agent
         </label>
@@ -168,7 +169,7 @@ export function Filters({
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         <label
           htmlFor="filter-search"
-          style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
+          style={{ fontSize: "11px", color: "#555555", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}
         >
           Search
         </label>
@@ -197,18 +198,21 @@ export function Filters({
             onClick={handleClearFilters}
             style={{
               backgroundColor: "transparent",
-              color: "#f87171",
-              border: "1px solid #f87171",
-              borderRadius: "6px",
+              color: "#ff3333",
+              border: "1px solid rgba(255,51,51,0.3)",
+              borderRadius: "2px",
               padding: "6px 14px",
               fontSize: "13px",
               cursor: "pointer",
               transition: "background-color 0.2s",
               whiteSpace: "nowrap",
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
             aria-label="Clear all filters"
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f8717120";
+              e.currentTarget.style.backgroundColor = "rgba(255,51,51,0.1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
@@ -226,7 +230,8 @@ export function Filters({
             display: "flex",
             alignItems: "flex-end",
             fontSize: "12px",
-            color: "#64748b",
+            color: "#555555",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
           }}
           data-testid="filter-count-info"
         >

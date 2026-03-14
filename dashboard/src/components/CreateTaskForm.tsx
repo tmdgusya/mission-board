@@ -143,16 +143,19 @@ export function CreateTaskForm({
             alignItems: "center",
             marginBottom: "24px",
             paddingBottom: "16px",
-            borderBottom: "1px solid #1e293b",
+            borderBottom: "1px solid rgba(0,255,204,0.1)",
           }}
         >
           <h2
             data-testid="create-task-title"
             style={{
-              fontSize: "18px",
+              fontSize: "16px",
               fontWeight: 600,
-              color: "#f1f5f9",
+              color: "#00ffcc",
               margin: 0,
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "1.5px",
             }}
           >
             Create New Task
@@ -302,7 +305,7 @@ export function CreateTaskForm({
               style={{
                 width: "16px",
                 height: "16px",
-                accentColor: "#3b82f6",
+                accentColor: "#00ffcc",
                 cursor: "pointer",
               }}
             />
@@ -310,8 +313,9 @@ export function CreateTaskForm({
               htmlFor="create-task-approval"
               style={{
                 fontSize: "13px",
-                color: "#cbd5e1",
+                color: "#888888",
                 cursor: "pointer",
+                fontFamily: "'JetBrains Mono', monospace",
               }}
             >
               Requires approval
@@ -324,12 +328,13 @@ export function CreateTaskForm({
               data-testid="error-general"
               style={{
                 padding: "12px",
-                backgroundColor: "#450a0a",
-                borderRadius: "8px",
+                backgroundColor: "rgba(255,51,51,0.05)",
+                borderRadius: "4px",
                 marginBottom: "16px",
-                border: "1px solid #dc2626",
-                color: "#fca5a5",
+                border: "1px solid rgba(255,51,51,0.3)",
+                color: "#ff3333",
                 fontSize: "13px",
+                fontFamily: "'JetBrains Mono', monospace",
               }}
             >
               {errors.general}
@@ -343,7 +348,7 @@ export function CreateTaskForm({
               justifyContent: "flex-end",
               gap: "8px",
               paddingTop: "16px",
-              borderTop: "1px solid #1e293b",
+              borderTop: "1px solid rgba(0,255,204,0.1)",
             }}
           >
             <button
@@ -376,7 +381,7 @@ const overlayStyle: React.CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  backgroundColor: "rgba(0, 0, 0, 0.85)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -384,34 +389,36 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-  backgroundColor: "#1e293b",
-  borderRadius: "12px",
-  border: "1px solid #334155",
+  backgroundColor: "#0a0a0a",
+  borderRadius: "4px",
+  border: "1px solid rgba(0,255,204,0.2)",
   width: "90%",
   maxWidth: "520px",
   maxHeight: "90vh",
   overflowY: "auto",
   padding: "24px",
-  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0,255,204,0.05)",
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: "12px",
-  color: "#64748b",
+  fontSize: "11px",
+  color: "#555555",
   fontWeight: 500,
   display: "block",
   marginBottom: "6px",
   textTransform: "uppercase",
-  letterSpacing: "0.5px",
+  letterSpacing: "1.5px",
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
 };
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "#0f172a",
-  color: "#e2e8f0",
-  border: "1px solid #334155",
-  borderRadius: "6px",
+  backgroundColor: "#000000",
+  color: "#c0c0c0",
+  border: "1px solid #333333",
+  borderRadius: "4px",
   padding: "8px 12px",
   fontSize: "14px",
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
   outline: "none",
   width: "100%",
   boxSizing: "border-box",
@@ -426,7 +433,6 @@ const textareaStyle: React.CSSProperties = {
   ...inputStyle,
   minHeight: "80px",
   resize: "vertical",
-  fontFamily: "inherit",
 };
 
 const fieldContainerStyle: React.CSSProperties = {
@@ -435,15 +441,16 @@ const fieldContainerStyle: React.CSSProperties = {
 
 const errorTextStyle: React.CSSProperties = {
   fontSize: "12px",
-  color: "#f87171",
+  color: "#ff3333",
   marginTop: "4px",
   display: "block",
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
 };
 
 const closeButtonStyle: React.CSSProperties = {
   background: "none",
   border: "none",
-  color: "#94a3b8",
+  color: "#555555",
   cursor: "pointer",
   fontSize: "20px",
   padding: "4px 8px",
@@ -452,22 +459,29 @@ const closeButtonStyle: React.CSSProperties = {
 
 const cancelButtonStyle: React.CSSProperties = {
   padding: "8px 16px",
-  borderRadius: "6px",
+  borderRadius: "4px",
   fontSize: "13px",
   fontWeight: 500,
   cursor: "pointer",
-  border: "1px solid #334155",
+  border: "1px solid #555555",
   backgroundColor: "transparent",
-  color: "#94a3b8",
+  color: "#555555",
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
 };
 
 const submitButtonStyle: React.CSSProperties = {
   padding: "8px 16px",
-  borderRadius: "6px",
+  borderRadius: "4px",
   fontSize: "13px",
   fontWeight: 500,
   cursor: "pointer",
-  border: "1px solid transparent",
-  backgroundColor: "#22c55e",
-  color: "white",
+  border: "1px solid #00ffcc",
+  backgroundColor: "transparent",
+  color: "#00ffcc",
+  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
+  transition: "all 0.2s",
 };

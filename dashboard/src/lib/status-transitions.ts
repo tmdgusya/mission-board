@@ -26,10 +26,10 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 export const STATUS_COLORS: Record<TaskStatus, string> = {
   backlog: "#64748b",
   ready: "#3b82f6",
-  in_progress: "#f59e0b",
+  in_progress: "#ffaa00",
   review: "#8b5cf6",
-  done: "#22c55e",
-  blocked: "#ef4444",
+  done: "#00ff66",
+  blocked: "#ff3333",
 };
 
 /**

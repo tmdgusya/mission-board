@@ -179,7 +179,11 @@ export function KanbanBoard({
           style={{
             fontSize: isMobile ? "20px" : "24px",
             fontWeight: 700,
-            color: "#f1f5f9",
+            color: "#00ffcc",
+            textTransform: "uppercase",
+            letterSpacing: "0.15em",
+            textShadow: "0 0 10px rgba(0,255,204,0.5)",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
           }}
           data-testid="board-title"
         >
@@ -188,7 +192,9 @@ export function KanbanBoard({
         <div
           style={{
             fontSize: "12px",
-            color: healthData?.status === "ok" ? "#22c55e" : "#ef4444",
+            color: healthData?.status === "ok" ? "#00ff66" : "#ff3333",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+            animation: healthData?.status === "ok" ? "glowPulse 2s ease-in-out infinite" : "none",
           }}
           data-testid="connection-status"
         >
@@ -207,12 +213,13 @@ export function KanbanBoard({
         <div
           data-testid="kanban-board"
           style={{
-            display: isMobile ? "flex" : "flex",
+            display: "flex",
             flexDirection: isMobile ? "column" : "row",
             gap: isMobile ? "12px" : "16px",
             overflowX: isMobile ? "visible" : "auto",
             paddingBottom: "16px",
             minHeight: "400px",
+            background: "transparent",
           }}
         >
           {TASK_STATUSES.map((status) => (

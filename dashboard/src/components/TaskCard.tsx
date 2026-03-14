@@ -4,6 +4,19 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "../lib/api-client";
 import { STATUS_COLORS } from "../lib/status-transitions";
 import { useAgents } from "../hooks/use-agents";
+import { AgentProgressBar } from "./AgentProgressBar";
+
+const TASK_TYPE_COLORS: Record<string, string> = {
+  bug: "#ef4444",
+  feature: "#3b82f6",
+  improvement: "#f59e0b",
+  research: "#8b5cf6",
+  maintenance: "#64748b",
+};
+
+function getTaskTypeColor(taskType: string): string {
+  return TASK_TYPE_COLORS[taskType] ?? "#00ffcc";
+}
 
 interface TaskCardProps {
   task: Task;
@@ -27,18 +40,24 @@ export function TaskCard({ task, isDragging, onTaskClick }: TaskCardProps): Reac
     }
   };
 
+  const isActiveWithAgent = task.status === "in_progress" && !!task.agentId;
+  const statusColor = STATUS_COLORS[task.status] ?? "#64748b";
+
   const style: React.CSSProperties = {
-    backgroundColor: isDragActive || isDragging ? "#334155" : "#1e293b",
+    backgroundColor: "#0a0a0a",
     borderRadius: "8px",
     padding: "12px",
     marginBottom: "8px",
-    border: `1px solid ${isDragActive || isDragging ? "#3b82f6" : "#334155"}`,
+    border: "1px solid rgba(0,255,204,0.12)",
+    borderLeft: `2px solid ${getTaskTypeColor(task.taskType)}`,
     cursor: "grab",
-    transition: "border-color 0.2s, background-color 0.2s",
+    transition: "all 150ms ease",
     opacity: isDragging ? 0.5 : 1,
     transform: CSS.Translate.toString(transform),
-    boxShadow: isDragActive ? "0 4px 12px rgba(0,0,0,0.3)" : "none",
+    boxShadow: isDragActive ? "0 0 12px rgba(0,255,204,0.3)" : "none",
     userSelect: "none",
+    overflow: "hidden",
+    position: "relative",
   };
 
   return (
@@ -49,8 +68,20 @@ export function TaskCard({ task, isDragging, onTaskClick }: TaskCardProps): Reac
       {...attributes}
       onClick={handleClick}
       data-testid={`task-card-${task.id}`}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "rgba(0,255,204,0.4)";
+        e.currentTarget.style.boxShadow = "0 0 12px rgba(0,255,204,0.3)";
+        e.currentTarget.style.transform = `translateY(-1px) ${CSS.Translate.toString(transform) ?? ""}`.trim();
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "rgba(0,255,204,0.12)";
+        e.currentTarget.style.borderLeftColor = getTaskTypeColor(task.taskType);
+        e.currentTarget.style.boxShadow = isDragActive ? "0 0 12px rgba(0,255,204,0.3)" : "none";
+        e.currentTarget.style.transform = CSS.Translate.toString(transform) ?? "";
+      }}
     >
-      <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "8px" }}>
+      <AgentProgressBar isActive={isActiveWithAgent} />
+      <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "8px", color: "#e2e8f0" }}>
         {task.title}
       </div>
       <div
@@ -66,8 +97,9 @@ export function TaskCard({ task, isDragging, onTaskClick }: TaskCardProps): Reac
             fontSize: "11px",
             padding: "2px 8px",
             borderRadius: "12px",
-            backgroundColor: `${STATUS_COLORS[task.status]}20`,
-            color: STATUS_COLORS[task.status],
+            backgroundColor: `${statusColor}20`,
+            color: statusColor,
+            boxShadow: `0 0 4px ${statusColor}`,
             textTransform: "capitalize",
           }}
         >
@@ -77,7 +109,8 @@ export function TaskCard({ task, isDragging, onTaskClick }: TaskCardProps): Reac
           data-testid="task-agent-name"
           style={{
             fontSize: "12px",
-            color: "#94a3b8",
+            color: agent ? "#00ff66" : "#94a3b8",
+            fontFamily: "monospace",
           }}
         >
           {agent ? agent.name : "Unclaimed"}

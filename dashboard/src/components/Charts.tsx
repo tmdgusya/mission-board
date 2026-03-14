@@ -32,23 +32,23 @@ interface ChartContainerProps {
 // =============================================
 
 const CHART_COLORS = [
-  "#3b82f6", // blue
-  "#22c55e", // green
-  "#f59e0b", // amber
-  "#a855f7", // purple
-  "#ef4444", // red
-  "#64748b", // slate
-  "#06b6d4", // cyan
-  "#ec4899", // pink
+  "#00ffcc", // cyan
+  "#00ff66", // green
+  "#00aaff", // blue
+  "#ffaa00", // amber
+  "#ff3333", // red
+  "#555555", // dim
+  "#00ddaa", // teal
+  "#ff6600", // orange
 ];
 
 const STATUS_CHART_COLORS: Record<string, string> = {
-  backlog: "#64748b",
-  ready: "#3b82f6",
-  in_progress: "#f59e0b",
-  review: "#a855f7",
-  done: "#22c55e",
-  blocked: "#ef4444",
+  backlog: "#555555",
+  ready: "#00aaff",
+  in_progress: "#ffaa00",
+  review: "#00ffcc",
+  done: "#00ff66",
+  blocked: "#ff3333",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -125,9 +125,9 @@ function ChartContainer({
     <div
       data-testid={testId}
       style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: "10px",
+        backgroundColor: "#000000",
+        border: "1px solid rgba(0,255,204,0.15)",
+        borderRadius: "4px",
         padding: "20px",
         width,
         minWidth: "0",
@@ -137,8 +137,11 @@ function ChartContainer({
         style={{
           fontSize: "14px",
           fontWeight: 600,
-          color: "#cbd5e1",
+          color: "#888888",
           margin: "0 0 16px 0",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
         }}
       >
         {title}
@@ -180,11 +183,11 @@ export function DonutChart({
         ctx.beginPath();
         ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
         ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2, true);
-        ctx.fillStyle = "#1e293b";
+        ctx.fillStyle = "#111111";
         ctx.fill();
 
-        ctx.fillStyle = "#64748b";
-        ctx.font = "14px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "14px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("No data", centerX, centerY);
@@ -209,7 +212,7 @@ export function DonutChart({
         ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
         ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
         ctx.closePath();
-        ctx.strokeStyle = "#0f172a";
+        ctx.strokeStyle = "#000000";
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -217,14 +220,14 @@ export function DonutChart({
       }
 
       // Center text
-      ctx.fillStyle = "#f1f5f9";
-      ctx.font = "bold 28px -apple-system, sans-serif";
+      ctx.fillStyle = "#00ffcc";
+      ctx.font = "bold 28px 'JetBrains Mono', monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(total), centerX, centerY - 8);
 
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "12px -apple-system, sans-serif";
+      ctx.fillStyle = "#555555";
+      ctx.font = "12px 'JetBrains Mono', monospace";
       ctx.fillText("Total", centerX, centerY + 14);
     };
 
@@ -281,7 +284,7 @@ export function DonutChart({
                 alignItems: "center",
                 gap: "6px",
                 fontSize: "12px",
-                color: "#cbd5e1",
+                color: "#888888",
               }}
             >
               <div
@@ -293,7 +296,7 @@ export function DonutChart({
                 }}
               />
               <span>{item.label}</span>
-              <span style={{ color: "#94a3b8", fontWeight: 600 }}>{item.value}</span>
+              <span style={{ color: "#555555", fontWeight: 600 }}>{item.value}</span>
             </div>
           ))}
         </div>
@@ -323,8 +326,8 @@ export function BarChart({
       ctx.clearRect(0, 0, w, h);
 
       if (data.length === 0) {
-        ctx.fillStyle = "#64748b";
-        ctx.font = "14px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "14px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("No data", w / 2, h / 2);
@@ -349,7 +352,7 @@ export function BarChart({
         ctx.beginPath();
         ctx.moveTo(paddingLeft, y);
         ctx.lineTo(w - paddingRight, y);
-        ctx.strokeStyle = "#1e293b";
+        ctx.strokeStyle = "rgba(0,255,204,0.07)";
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -379,22 +382,22 @@ export function BarChart({
 
         // Value label on top of bar
         if (barHeight > 16) {
-          ctx.fillStyle = "#f1f5f9";
-          ctx.font = "bold 11px -apple-system, sans-serif";
+          ctx.fillStyle = "#c0c0c0";
+          ctx.font = "bold 11px 'JetBrains Mono', monospace";
           ctx.textAlign = "center";
           ctx.textBaseline = "bottom";
           ctx.fillText(String(item.value), x + barWidth / 2, y - 4);
         } else if (item.value > 0) {
-          ctx.fillStyle = "#cbd5e1";
-          ctx.font = "bold 11px -apple-system, sans-serif";
+          ctx.fillStyle = "#888888";
+          ctx.font = "bold 11px 'JetBrains Mono', monospace";
           ctx.textAlign = "center";
           ctx.textBaseline = "bottom";
           ctx.fillText(String(item.value), x + barWidth / 2, y - 4);
         }
 
         // X-axis label
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "11px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "11px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
@@ -455,8 +458,8 @@ export function LineChart({
       ctx.clearRect(0, 0, w, h);
 
       if (points.length === 0) {
-        ctx.fillStyle = "#64748b";
-        ctx.font = "14px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "14px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("No data", w / 2, h / 2);
@@ -480,14 +483,14 @@ export function LineChart({
         ctx.beginPath();
         ctx.moveTo(paddingLeft, y);
         ctx.lineTo(w - paddingRight, y);
-        ctx.strokeStyle = "#1e293b";
+        ctx.strokeStyle = "rgba(0,255,204,0.07)";
         ctx.lineWidth = 1;
         ctx.stroke();
 
         // Y-axis label
         const yVal = Math.round(maxValue * 1.1 * (1 - i / gridLines));
-        ctx.fillStyle = "#64748b";
-        ctx.font = "10px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "10px 'JetBrains Mono', monospace";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
         ctx.fillText(String(yVal), paddingLeft - 8, y);
@@ -503,8 +506,8 @@ export function LineChart({
 
       // Draw filled area under the line
       const gradient = ctx.createLinearGradient(0, paddingTop, 0, paddingTop + chartHeight);
-      gradient.addColorStop(0, "rgba(59, 130, 246, 0.3)");
-      gradient.addColorStop(1, "rgba(59, 130, 246, 0.02)");
+      gradient.addColorStop(0, "rgba(0, 255, 204, 0.2)");
+      gradient.addColorStop(1, "rgba(0, 255, 204, 0.01)");
 
       ctx.beginPath();
       ctx.moveTo(chartPoints[0].x, paddingTop + chartHeight);
@@ -522,7 +525,7 @@ export function LineChart({
       for (let i = 1; i < chartPoints.length; i++) {
         ctx.lineTo(chartPoints[i].x, chartPoints[i].y);
       }
-      ctx.strokeStyle = "#3b82f6";
+      ctx.strokeStyle = "#00ffcc";
       ctx.lineWidth = 2.5;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
@@ -532,9 +535,9 @@ export function LineChart({
       chartPoints.forEach((point, i) => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#3b82f6";
+        ctx.fillStyle = "#00ffcc";
         ctx.fill();
-        ctx.strokeStyle = "#0f172a";
+        ctx.strokeStyle = "#000000";
         ctx.lineWidth = 2;
         ctx.stroke();
       });
@@ -545,8 +548,8 @@ export function LineChart({
         if (i % labelInterval !== 0 && i !== points.length - 1) return;
         const x = chartPoints[i].x;
         const dateLabel = p.date.slice(5); // "MM-DD" format
-        ctx.fillStyle = "#64748b";
-        ctx.font = "10px -apple-system, sans-serif";
+        ctx.fillStyle = "#555555";
+        ctx.font = "10px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillText(dateLabel, x, paddingTop + chartHeight + 8);
@@ -646,7 +649,7 @@ export function VelocityLine({
             justifyContent: "center",
           }}
         >
-          <span style={{ color: "#64748b", fontSize: "14px" }}>Loading velocity data...</span>
+          <span style={{ color: "#555555", fontSize: "14px", fontFamily: "'JetBrains Mono', monospace" }}>Loading velocity data...</span>
         </div>
       </ChartContainer>
     );

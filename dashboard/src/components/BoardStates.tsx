@@ -32,21 +32,31 @@ export function LoadingState({
         style={{
           width: "48px",
           height: "48px",
-          border: "4px solid #334155",
-          borderTopColor: "#3b82f6",
+          border: "2px solid rgba(0,255,204,0.15)",
+          borderTopColor: "#00ffcc",
           borderRadius: "50%",
-          animation: "spin 1s linear infinite",
+          animation: "palantirPulseRing 1.5s ease-in-out infinite",
+          boxShadow: "0 0 15px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.05)",
         }}
       />
       <span
         style={{
-          color: "#94a3b8",
+          color: "#555555",
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "2px",
         }}
       >
         {message}
       </span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes palantirPulseRing {
+          0%, 100% { border-top-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.2), inset 0 0 15px rgba(0,255,204,0.05); transform: rotate(0deg); }
+          50% { border-top-color: rgba(0,255,204,0.6); box-shadow: 0 0 25px rgba(0,255,204,0.4), inset 0 0 25px rgba(0,255,204,0.1); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -81,6 +91,7 @@ export function ErrorState({
         padding: "60px 24px",
         gap: "16px",
         minHeight: "400px",
+        background: "radial-gradient(ellipse at center, rgba(255,51,51,0.05) 0%, transparent 70%)",
       }}
     >
       {/* Error icon */}
@@ -89,13 +100,15 @@ export function ErrorState({
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          backgroundColor: "#ef444420",
+          backgroundColor: "rgba(255,51,51,0.1)",
+          border: "1px solid rgba(255,51,51,0.3)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: "28px",
-          color: "#ef4444",
+          color: "#ff3333",
           flexShrink: 0,
+          boxShadow: "0 0 20px rgba(255,51,51,0.15)",
         }}
         aria-hidden="true"
       >
@@ -104,10 +117,13 @@ export function ErrorState({
 
       <h2
         style={{
-          color: "#ef4444",
+          color: "#ff3333",
           fontSize: "20px",
           fontWeight: 700,
           margin: 0,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
         }}
       >
         {message}
@@ -115,12 +131,13 @@ export function ErrorState({
 
       <p
         style={{
-          color: "#94a3b8",
+          color: "#555555",
           textAlign: "center",
           maxWidth: "420px",
           lineHeight: 1.5,
           margin: 0,
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         }}
       >
         {details}
@@ -134,18 +151,31 @@ export function ErrorState({
           aria-label="Retry connection"
           style={{
             padding: "10px 28px",
-            backgroundColor: isRetrying ? "#1e293b" : "#3b82f6",
-            color: isRetrying ? "#64748b" : "white",
-            border: "none",
-            borderRadius: "8px",
+            backgroundColor: "transparent",
+            color: isRetrying ? "#555555" : "#00ffcc",
+            border: `1px solid ${isRetrying ? "#333333" : "#00ffcc"}`,
+            borderRadius: "4px",
             cursor: isRetrying ? "not-allowed" : "pointer",
             fontSize: "14px",
             fontWeight: 500,
-            transition: "background-color 0.2s",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            transition: "all 0.2s",
             display: "flex",
             alignItems: "center",
             gap: "8px",
             marginTop: "4px",
+          }}
+          onMouseEnter={(e) => {
+            if (!isRetrying) {
+              e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,204,0.3)";
+              e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.backgroundColor = "transparent";
           }}
         >
           {isRetrying && (
@@ -153,8 +183,8 @@ export function ErrorState({
               style={{
                 width: "14px",
                 height: "14px",
-                border: "2px solid #475569",
-                borderTopColor: "#64748b",
+                border: "2px solid #333333",
+                borderTopColor: "#555555",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
                 display: "inline-block",
@@ -164,6 +194,7 @@ export function ErrorState({
           {isRetrying ? "Retrying..." : "Retry"}
         </button>
       )}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -181,10 +212,9 @@ export function EmptyState({
   hasActiveFilters = false,
   onClearFilters,
 }: EmptyStateProps): React.ReactElement {
-  const icon = hasActiveFilters ? "🔍" : "📋";
   const title = hasActiveFilters
-    ? "No matching tasks"
-    : "No tasks yet";
+    ? "NO MATCHING SIGNALS"
+    : "NO SIGNALS DETECTED";
   const description = hasActiveFilters
     ? "No tasks match the current filters. Try adjusting or clearing your filters."
     : "Create your first task to get started with the Mission Board.";
@@ -202,6 +232,8 @@ export function EmptyState({
         padding: "60px 24px",
         gap: "16px",
         minHeight: "400px",
+        backgroundImage: "linear-gradient(rgba(0,255,204,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,204,0.03) 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
       }}
     >
       <div
@@ -209,7 +241,8 @@ export function EmptyState({
           width: "72px",
           height: "72px",
           borderRadius: "50%",
-          backgroundColor: "#1e293b",
+          backgroundColor: "rgba(0,255,204,0.05)",
+          border: "1px solid rgba(0,255,204,0.15)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -218,15 +251,18 @@ export function EmptyState({
         }}
         aria-hidden="true"
       >
-        {icon}
+        {hasActiveFilters ? "?" : "-"}
       </div>
 
       <h2
         style={{
-          color: "#e2e8f0",
+          color: "#555555",
           fontSize: "18px",
           fontWeight: 600,
           margin: 0,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "3px",
         }}
       >
         {title}
@@ -234,12 +270,13 @@ export function EmptyState({
 
       <p
         style={{
-          color: "#94a3b8",
+          color: "#444444",
           textAlign: "center",
           maxWidth: "400px",
           lineHeight: 1.5,
           margin: 0,
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         }}
       >
         {description}
@@ -254,18 +291,23 @@ export function EmptyState({
             marginTop: "8px",
             padding: "8px 20px",
             backgroundColor: "transparent",
-            color: "#3b82f6",
-            border: "1px solid #3b82f6",
-            borderRadius: "8px",
+            color: "#00ffcc",
+            border: "1px solid #00ffcc",
+            borderRadius: "4px",
             cursor: "pointer",
             fontSize: "13px",
             fontWeight: 500,
-            transition: "background-color 0.2s",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            transition: "all 0.2s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#3b82f620";
+            e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,204,0.3)";
+            e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
           }}
           onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "none";
             e.currentTarget.style.backgroundColor = "transparent";
           }}
         >

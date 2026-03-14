@@ -55,12 +55,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  backlog: { bg: "rgba(100, 116, 139, 0.15)", color: "#94a3b8", border: "rgba(100, 116, 139, 0.3)" },
-  ready: { bg: "rgba(59, 130, 246, 0.15)", color: "#60a5fa", border: "rgba(59, 130, 246, 0.3)" },
-  in_progress: { bg: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", border: "rgba(245, 158, 11, 0.3)" },
-  review: { bg: "rgba(168, 85, 247, 0.15)", color: "#a855f7", border: "rgba(168, 85, 247, 0.3)" },
-  done: { bg: "rgba(34, 197, 94, 0.15)", color: "#22c55e", border: "rgba(34, 197, 94, 0.3)" },
-  blocked: { bg: "rgba(239, 68, 68, 0.15)", color: "#ef4444", border: "rgba(239, 68, 68, 0.3)" },
+  backlog: { bg: "rgba(85, 85, 85, 0.15)", color: "#555555", border: "rgba(85, 85, 85, 0.3)" },
+  ready: { bg: "rgba(0, 170, 255, 0.15)", color: "#00aaff", border: "rgba(0, 170, 255, 0.3)" },
+  in_progress: { bg: "rgba(255, 170, 0, 0.15)", color: "#ffaa00", border: "rgba(255, 170, 0, 0.3)" },
+  review: { bg: "rgba(0, 255, 204, 0.15)", color: "#00ffcc", border: "rgba(0, 255, 204, 0.3)" },
+  done: { bg: "rgba(0, 255, 102, 0.15)", color: "#00ff66", border: "rgba(0, 255, 102, 0.3)" },
+  blocked: { bg: "rgba(255, 51, 51, 0.15)", color: "#ff3333", border: "rgba(255, 51, 51, 0.3)" },
 };
 
 // =============================================
@@ -82,9 +82,9 @@ function MetricCard({
     <div
       data-testid={testId}
       style={{
-        backgroundColor: "#1e293b",
-        border: "1px solid #334155",
-        borderRadius: "10px",
+        backgroundColor: "#0a0a0a",
+        borderTop: "2px solid #00ffcc",
+        borderRadius: "4px",
         padding: "20px",
         display: "flex",
         flexDirection: "column",
@@ -94,11 +94,12 @@ function MetricCard({
     >
       <span
         style={{
-          fontSize: "12px",
+          fontSize: "11px",
           fontWeight: 500,
-          color: "#94a3b8",
+          color: "#555555",
           textTransform: "uppercase",
-          letterSpacing: "0.5px",
+          letterSpacing: "1.5px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         }}
       >
         {label}
@@ -107,8 +108,9 @@ function MetricCard({
         style={{
           fontSize: "28px",
           fontWeight: 700,
-          color: "#f1f5f9",
+          color: "#00ffcc",
           lineHeight: 1.2,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         }}
       >
         {value}
@@ -117,8 +119,9 @@ function MetricCard({
         <span
           style={{
             fontSize: "12px",
-            color: "#64748b",
+            color: "#444444",
             marginTop: "2px",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
           }}
         >
           {sublabel}
@@ -142,13 +145,16 @@ function SectionHeader({
   return (
     <h2
       style={{
-        fontSize: "18px",
+        fontSize: "14px",
         fontWeight: 600,
-        color: "#f1f5f9",
+        color: "#888888",
         margin: 0,
         display: "flex",
         alignItems: "center",
         gap: "8px",
+        fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+        textTransform: "uppercase",
+        letterSpacing: "2px",
       }}
     >
       <span aria-hidden="true">{icon}</span>
@@ -189,13 +195,14 @@ function AgentStatsTable({
                   style={{
                     textAlign: "left",
                     padding: "10px 12px",
-                    color: "#94a3b8",
+                    color: "#555555",
                     fontWeight: 500,
-                    fontSize: "12px",
+                    fontSize: "11px",
                     textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    borderBottom: "1px solid #334155",
+                    letterSpacing: "1.5px",
+                    borderBottom: "1px solid rgba(0,255,204,0.1)",
                     whiteSpace: "nowrap",
+                    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                   }}
                 >
                   {header}
@@ -210,11 +217,11 @@ function AgentStatsTable({
               key={stat.agentId}
               data-testid={`agent-row-${stat.agentId}`}
               style={{
-                borderBottom: "1px solid #1e293b",
+                borderBottom: "1px solid rgba(0,255,204,0.05)",
                 transition: "background-color 0.15s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#1e293b";
+                e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.03)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
@@ -223,12 +230,13 @@ function AgentStatsTable({
               <td
                 style={{
                   padding: "10px 12px",
-                  color: "#e2e8f0",
+                  color: "#c0c0c0",
                   fontWeight: 500,
                   maxWidth: "200px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {stat.agentName}
@@ -237,8 +245,9 @@ function AgentStatsTable({
                 data-testid={`agent-completed-${stat.agentId}`}
                 style={{
                   padding: "10px 12px",
-                  color: "#22c55e",
+                  color: "#00ff66",
                   fontWeight: 600,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {stat.tasksCompleted}
@@ -247,8 +256,9 @@ function AgentStatsTable({
                 data-testid={`agent-in-progress-${stat.agentId}`}
                 style={{
                   padding: "10px 12px",
-                  color: "#f59e0b",
+                  color: "#ffaa00",
                   fontWeight: 600,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {stat.tasksInProgress}
@@ -256,7 +266,8 @@ function AgentStatsTable({
               <td
                 style={{
                   padding: "10px 12px",
-                  color: "#94a3b8",
+                  color: "#555555",
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {stat.totalTasks}
@@ -265,7 +276,8 @@ function AgentStatsTable({
                 data-testid={`agent-avg-time-${stat.agentId}`}
                 style={{
                   padding: "10px 12px",
-                  color: "#e2e8f0",
+                  color: "#c0c0c0",
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {formatDuration(stat.avgCompletionTimeMs)}
@@ -274,8 +286,9 @@ function AgentStatsTable({
                 data-testid={`agent-success-rate-${stat.agentId}`}
                 style={{
                   padding: "10px 12px",
-                  color: stat.successRate !== null && stat.successRate >= 70 ? "#22c55e" : "#e2e8f0",
+                  color: stat.successRate !== null && stat.successRate >= 70 ? "#00ff66" : "#c0c0c0",
                   fontWeight: 500,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                 }}
               >
                 {formatRate(stat.successRate)}
@@ -336,7 +349,8 @@ function TaskStatusDistribution({
                   style={{
                     fontSize: "14px",
                     fontWeight: 600,
-                    color: "#e2e8f0",
+                    color: "#c0c0c0",
+                    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                   }}
                 >
                   {count}
@@ -344,9 +358,10 @@ function TaskStatusDistribution({
                 <span
                   style={{
                     fontSize: "12px",
-                    color: "#64748b",
+                    color: "#555555",
                     minWidth: "36px",
                     textAlign: "right",
+                    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
                   }}
                 >
                   {percentage}%
@@ -357,7 +372,7 @@ function TaskStatusDistribution({
               style={{
                 width: "100%",
                 height: "8px",
-                backgroundColor: "#0f172a",
+                backgroundColor: "#111111",
                 borderRadius: "4px",
                 overflow: "hidden",
               }}
@@ -405,13 +420,14 @@ function AnalyticsLoadingState(): React.ReactElement {
         style={{
           width: "48px",
           height: "48px",
-          border: "4px solid #334155",
-          borderTopColor: "#3b82f6",
+          border: "2px solid rgba(0,255,204,0.15)",
+          borderTopColor: "#00ffcc",
           borderRadius: "50%",
           animation: "spin 1s linear infinite",
+          boxShadow: "0 0 15px rgba(0,255,204,0.2)",
         }}
       />
-      <span style={{ color: "#94a3b8", fontSize: "14px" }}>
+      <span style={{ color: "#555555", fontSize: "14px", fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "2px" }}>
         Loading analytics...
       </span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -450,31 +466,34 @@ function AnalyticsErrorState({
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          backgroundColor: "#ef444420",
+          backgroundColor: "rgba(255,51,51,0.1)",
+          border: "1px solid rgba(255,51,51,0.3)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: "28px",
-          color: "#ef4444",
+          color: "#ff3333",
           flexShrink: 0,
+          boxShadow: "0 0 20px rgba(255,51,51,0.15)",
         }}
         aria-hidden="true"
       >
         ⚠
       </div>
       <h2
-        style={{ color: "#ef4444", fontSize: "20px", fontWeight: 700, margin: 0 }}
+        style={{ color: "#ff3333", fontSize: "20px", fontWeight: 700, margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "1px" }}
       >
         Error Loading Analytics
       </h2>
       <p
         style={{
-          color: "#94a3b8",
+          color: "#555555",
           textAlign: "center",
           maxWidth: "420px",
           lineHeight: 1.5,
           margin: 0,
           fontSize: "14px",
+          fontFamily: "'JetBrains Mono', monospace",
         }}
       >
         {message}
@@ -485,21 +504,26 @@ function AnalyticsErrorState({
         aria-label="Retry loading analytics"
         style={{
           padding: "10px 28px",
-          backgroundColor: "#3b82f6",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
+          backgroundColor: "transparent",
+          color: "#00ffcc",
+          border: "1px solid #00ffcc",
+          borderRadius: "4px",
           cursor: "pointer",
           fontSize: "14px",
           fontWeight: 500,
-          transition: "background-color 0.2s",
+          fontFamily: "'JetBrains Mono', monospace",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          transition: "all 0.2s",
           marginTop: "4px",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#2563eb";
+          e.currentTarget.style.boxShadow = "0 0 15px rgba(0,255,204,0.3)";
+          e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.05)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#3b82f6";
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = "transparent";
         }}
       >
         Retry
@@ -671,9 +695,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
           <label
             htmlFor="analytics-project-filter"
             style={{
-              fontSize: "13px",
+              fontSize: "11px",
               fontWeight: 500,
-              color: "#94a3b8",
+              color: "#555555",
+              fontFamily: "'JetBrains Mono', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
             }}
           >
             Project:
@@ -685,11 +712,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             onChange={handleProjectChange}
             style={{
               padding: "6px 12px",
-              borderRadius: "6px",
-              border: "1px solid #334155",
-              backgroundColor: "#1e293b",
-              color: "#e2e8f0",
+              borderRadius: "4px",
+              border: "1px solid #333333",
+              backgroundColor: "#000000",
+              color: "#c0c0c0",
               fontSize: "13px",
+              fontFamily: "'JetBrains Mono', monospace",
               cursor: "pointer",
               outline: "none",
               minWidth: "180px",
@@ -709,9 +737,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
           <label
             htmlFor="analytics-date-from"
             style={{
-              fontSize: "13px",
+              fontSize: "11px",
               fontWeight: 500,
-              color: "#94a3b8",
+              color: "#555555",
+              fontFamily: "'JetBrains Mono', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
             }}
           >
             From:
@@ -724,11 +755,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             onChange={handleDateFromChange}
             style={{
               padding: "6px 10px",
-              borderRadius: "6px",
-              border: "1px solid #334155",
-              backgroundColor: "#1e293b",
-              color: "#e2e8f0",
+              borderRadius: "4px",
+              border: "1px solid #333333",
+              backgroundColor: "#000000",
+              color: "#c0c0c0",
               fontSize: "13px",
+              fontFamily: "'JetBrains Mono', monospace",
               cursor: "pointer",
               outline: "none",
             }}
@@ -739,9 +771,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
           <label
             htmlFor="analytics-date-to"
             style={{
-              fontSize: "13px",
+              fontSize: "11px",
               fontWeight: 500,
-              color: "#94a3b8",
+              color: "#555555",
+              fontFamily: "'JetBrains Mono', monospace",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
             }}
           >
             To:
@@ -754,11 +789,12 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             onChange={handleDateToChange}
             style={{
               padding: "6px 10px",
-              borderRadius: "6px",
-              border: "1px solid #334155",
-              backgroundColor: "#1e293b",
-              color: "#e2e8f0",
+              borderRadius: "4px",
+              border: "1px solid #333333",
+              backgroundColor: "#000000",
+              color: "#c0c0c0",
               fontSize: "13px",
+              fontFamily: "'JetBrains Mono', monospace",
               cursor: "pointer",
               outline: "none",
             }}
@@ -772,18 +808,19 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             onClick={handleClearFilters}
             style={{
               padding: "6px 14px",
-              borderRadius: "6px",
-              border: "1px solid #475569",
+              borderRadius: "4px",
+              border: "1px solid #555555",
               backgroundColor: "transparent",
-              color: "#94a3b8",
+              color: "#555555",
               fontSize: "13px",
+              fontFamily: "'JetBrains Mono', monospace",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               gap: "4px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#1e293b";
+              e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.03)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
@@ -835,9 +872,9 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
             {/* Status distribution bar view */}
             <div
               style={{
-                backgroundColor: "#1e293b",
-                border: "1px solid #334155",
-                borderRadius: "10px",
+                backgroundColor: "#000000",
+                border: "1px solid rgba(0,255,204,0.15)",
+                borderRadius: "4px",
                 padding: "20px",
               }}
             >
@@ -845,8 +882,11 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
                 style={{
                   fontSize: "14px",
                   fontWeight: 600,
-                  color: "#cbd5e1",
+                  color: "#888888",
                   margin: "0 0 16px 0",
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
                 }}
               >
                 Status Distribution
@@ -904,9 +944,9 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
         <div
           style={{
             marginTop: "16px",
-            backgroundColor: "#1e293b",
-            border: "1px solid #334155",
-            borderRadius: "10px",
+            backgroundColor: "#000000",
+            border: "1px solid rgba(0,255,204,0.15)",
+            borderRadius: "4px",
             padding: "4px",
           }}
         >
@@ -916,8 +956,9 @@ export function Analytics({ onBack }: AnalyticsProps): React.ReactElement {
               style={{
                 padding: "40px 20px",
                 textAlign: "center",
-                color: "#64748b",
+                color: "#555555",
                 fontSize: "14px",
+                fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
               }}
             >
               No agent data available. Agents will appear here once they start working on tasks.
@@ -998,29 +1039,32 @@ function AnalyticsHeader({
           onClick={onBack}
           style={{
             padding: "6px 12px",
-            borderRadius: "6px",
+            borderRadius: "4px",
             fontSize: "13px",
             fontWeight: 500,
             cursor: "pointer",
-            border: "1px solid #475569",
+            border: "1px solid #333333",
             backgroundColor: "transparent",
-            color: "#94a3b8",
+            color: "#555555",
+            fontFamily: "'JetBrains Mono', monospace",
             display: "flex",
             alignItems: "center",
             gap: "6px",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#1e293b";
+            e.currentTarget.style.backgroundColor = "rgba(0,255,204,0.03)";
+            e.currentTarget.style.borderColor = "rgba(0,255,204,0.3)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.borderColor = "#333333";
           }}
         >
           ← Back
         </button>
         <h1
           data-testid="analytics-page-header"
-          style={{ fontSize: "24px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}
+          style={{ fontSize: "20px", fontWeight: 700, color: "#00ffcc", margin: 0, fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "2px" }}
         >
           Analytics
         </h1>
