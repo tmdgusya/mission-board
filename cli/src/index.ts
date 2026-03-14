@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
 import chalk from "chalk";
-import { loadConfig, getConfigPath, updateConfig, validateAgentId, generateAgentId } from "./config";
+import { loadConfig, getConfigPath, updateConfig, validateAgentId, generateAgentId, registerAgent, getAgentId } from "./config";
 import { executeCreate } from "./commands/create";
 import { executeList, executeProjects } from "./commands/list";
 import { executeClaim } from "./commands/claim";
@@ -14,6 +14,14 @@ import { registerGlobalErrorHandlers } from "./errors";
 import { createInterface } from "node:readline";
 
 const program = new Command();
+
+/**
+ * Get the agent name from the global --agent flag.
+ * Returns undefined if not set (commands should fall back to default_agent).
+ */
+function getGlobalAgentName(): string | undefined {
+  return program.opts().agent as string | undefined;
+}
 
 // Helper to prompt for input
 async function prompt(question: string): Promise<string> {
@@ -36,26 +44,22 @@ async function initializeConfig(): Promise<void> {
   console.log(chalk.gray(`Config will be stored at: ${getConfigPath()}`));
   console.log();
 
-  const suggestedId = generateAgentId();
-  console.log(chalk.gray(`Suggested agent ID: ${suggestedId}`));
-  
-  let agentId = await prompt(chalk.yellow("Enter your agent ID (or press Enter to use suggested): "));
-  
-  if (!agentId) {
-    agentId = suggestedId;
+  let agentName = await prompt(chalk.yellow("Enter a name for this agent (e.g., alice, bob): "));
+
+  // Validate agent name
+  while (!agentName || !validateAgentId(agentName)) {
+    console.log(chalk.red("Invalid agent name. Use only letters, numbers, hyphens, underscores, and dots."));
+    agentName = await prompt(chalk.yellow("Enter agent name: "));
   }
 
-  // Validate agent ID
-  while (!validateAgentId(agentId)) {
-    console.log(chalk.red("Invalid agent ID. Use only letters, numbers, hyphens, underscores, and dots."));
-    agentId = await prompt(chalk.yellow("Enter your agent ID: "));
-  }
+  const uuid = await registerAgent(agentName);
+  // Ensure this agent is the default
+  await updateConfig({ default_agent: agentName });
 
-  await updateConfig({ agent_id: agentId });
-  
   console.log();
   console.log(chalk.green("✓ Configuration saved successfully!"));
-  console.log(chalk.gray(`Agent ID: ${agentId}`));
+  console.log(chalk.gray(`Agent name: ${agentName}`));
+  console.log(chalk.gray(`Agent UUID: ${uuid}`));
 }
 
 program
@@ -67,6 +71,7 @@ program
     "  Mission Board API."
   )
   .version("1.0.0")
+  .option("--agent <name>", "Agent name to use (overrides default_agent from config)")
   .addHelpText("afterAll", () => {
     return (
       "\n" +
@@ -116,8 +121,18 @@ program
       const config = await loadConfig();
       console.log(chalk.blue("Current Configuration:"));
       console.log(chalk.gray(`  Config file: ${getConfigPath()}`));
-      console.log(`  Agent ID: ${chalk.cyan(config.agent_id)}`);
-      console.log(`  API URL:  ${chalk.cyan(config.api_url)}`);
+      console.log(`  API URL:       ${chalk.cyan(config.api_url)}`);
+      console.log(`  Default agent: ${chalk.cyan(config.default_agent || "(none)")}`);
+      const agentEntries = Object.entries(config.agents);
+      if (agentEntries.length > 0) {
+        console.log(`  Agents:`);
+        for (const [name, uuid] of agentEntries) {
+          const marker = name === config.default_agent ? " (default)" : "";
+          console.log(`    ${chalk.cyan(name)}: ${uuid}${marker}`);
+        }
+      } else {
+        console.log(`  Agents: ${chalk.gray("(none registered)")}`);
+      }
     } catch (error) {
       console.error(chalk.red("Failed to load config:"), error);
       process.exit(1);
@@ -127,23 +142,29 @@ program
 program
   .command("set-agent")
   .description(
-    "Update the agent ID stored in the CLI configuration.\n\n" +
-    "  The agent ID identifies you when claiming and creating tasks.\n" +
+    "Set the default agent by name.\n\n" +
+    "  The agent name must already be registered. If it doesn't exist,\n" +
+    "  a new agent will be registered with a generated UUID.\n" +
     "  Valid characters: letters, numbers, hyphens, underscores, and dots."
   )
-  .argument("<agent-id>", "New agent ID (letters, numbers, hyphens, underscores, dots)")
-  .action(async (agentId: string) => {
+  .argument("<agent-name>", "Agent name to set as default (letters, numbers, hyphens, underscores, dots)")
+  .action(async (agentName: string) => {
     try {
-      if (!validateAgentId(agentId)) {
-        console.error(chalk.red("Error: Invalid agent ID format"));
+      if (!validateAgentId(agentName)) {
+        console.error(chalk.red("Error: Invalid agent name format"));
         console.error(chalk.gray("Use only letters, numbers, hyphens, underscores, and dots."));
         process.exit(1);
       }
 
-      await updateConfig({ agent_id: agentId });
-      console.log(chalk.green(`✓ Agent ID updated to: ${agentId}`));
+      const config = await loadConfig();
+      if (!config.agents[agentName]) {
+        // Register new agent
+        await registerAgent(agentName);
+      }
+      await updateConfig({ default_agent: agentName });
+      console.log(chalk.green(`✓ Default agent set to: ${agentName}`));
     } catch (error) {
-      console.error(chalk.red("Failed to update agent ID:"), error);
+      console.error(chalk.red("Failed to update default agent:"), error);
       process.exit(1);
     }
   });
@@ -212,7 +233,7 @@ program
   )
   .argument("<task-id>", "Task UUID to claim")
   .action(async (taskId: string) => {
-    const exitCode = await executeClaim(taskId);
+    const exitCode = await executeClaim(taskId, getGlobalAgentName());
     process.exit(exitCode);
   });
 
@@ -275,7 +296,7 @@ program
   .argument("<task-id>", "Task UUID to request approval for")
   .requiredOption("--action <description>", "Description of the action requiring approval")
   .action(async (taskId: string, options: { action: string }) => {
-    const exitCode = await executeRequestApproval(taskId, options.action);
+    const exitCode = await executeRequestApproval(taskId, options.action, getGlobalAgentName());
     process.exit(exitCode);
   });
 

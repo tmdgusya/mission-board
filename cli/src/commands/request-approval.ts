@@ -48,7 +48,8 @@ function isValidUUID(uuid: string): boolean {
  */
 export async function executeRequestApproval(
   taskId: string,
-  action: string
+  action: string,
+  agentName?: string
 ): Promise<number> {
   // Validate task ID format (UUID)
   if (!isValidUUID(taskId)) {
@@ -71,7 +72,7 @@ export async function executeRequestApproval(
   }
 
   try {
-    const approval = await requestApproval(taskId, action);
+    const approval = await requestApproval(taskId, action, agentName);
 
     console.log(formatRequestApprovalSuccess(approval.id, taskId, action));
     return 0;
