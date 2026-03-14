@@ -1,0 +1,214 @@
+{
+  "groupId": "export-charts-filters",
+  "testedAt": "2026-03-14T11:39:00.000Z",
+  "isolation": {
+    "dashboardUrl": "http://localhost:3201",
+    "apiUrl": "http://localhost:3200",
+    "browserSession": "fee69b4f2709__export",
+    "mode": "read-only (export button clicks expected)"
+  },
+  "toolsUsed": ["agent-browser"],
+  "assertions": [
+    {
+      "id": "VAL-ANAL-006",
+      "title": "Charts display",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to http://localhost:3201, click Analytics nav button",
+          "expected": "Analytics page loads with charts section",
+          "observed": "Analytics page loaded successfully with Charts heading and three chart areas"
+        },
+        {
+          "action": "Verify data-testid elements exist for all three charts",
+          "expected": "status-donut, agent-comparison-bar, velocity-line all present",
+          "observed": "All three data-testids confirmed present via JavaScript evaluation"
+        },
+        {
+          "action": "Verify charts have rendered canvas content (non-zero dimensions and drawn pixels)",
+          "expected": "Each chart canvas has width/height > 0 and drawn pixel content",
+          "observed": "Donut: 240x240 (6 drawn pixels in sample), Bar: 558x280 (76 drawn pixels), Line: 1175x280 (47 drawn pixels)"
+        },
+        {
+          "action": "Take screenshot of charts section",
+          "expected": "Screenshot shows all three charts with data",
+          "observed": "Screenshot captured at VAL-ANAL-006-charts-section.png"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "analytics-export/VAL-ANAL-006-charts-section.png"
+        ],
+        "consoleErrors": "none",
+        "data": {
+          "statusDonut": { "exists": true, "width": 240, "height": 240, "drawnPixelsSample": 6 },
+          "agentComparisonBar": { "exists": true, "width": 558, "height": 280, "drawnPixelsSample": 76 },
+          "velocityLine": { "exists": true, "width": 1175, "height": 280, "drawnPixelsSample": 47 }
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ANAL-004",
+      "title": "Export tasks to CSV",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to Analytics page, verify export buttons and count",
+          "expected": "Export buttons visible, export count shows '11 tasks'",
+          "observed": "Export buttons visible, data-testid='export-count' shows '11 tasks'"
+        },
+        {
+          "action": "Click CSV export button (data-testid='export-csv-button')",
+          "expected": "CSV file downloads",
+          "observed": "File downloaded: mission-board-export-2026-03-14.csv (2273 bytes)"
+        },
+        {
+          "action": "Verify CSV file content",
+          "expected": "CSV has correct headers and 11 task rows",
+          "observed": "CSV has headers: ID,Title,Description,Status,Task Type,Project,Agent,Requires Approval,Created At,Updated At,Claimed At. Contains 11 data rows with correct values including project names (Alpha Project, Beta Project) and agent IDs resolved"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "analytics-export/VAL-ANAL-004-005-export-buttons.png"
+        ],
+        "files": [
+          "analytics-export/VAL-ANAL-004-csv-export.csv"
+        ],
+        "consoleErrors": "none",
+        "csvDetails": {
+          "headers": "ID,Title,Description,Status,Task Type,Project,Agent,Requires Approval,Created At,Updated At,Claimed At",
+          "rowCount": 11,
+          "fileSize": "2273 bytes",
+          "filename": "mission-board-export-2026-03-14.csv"
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ANAL-005",
+      "title": "Export tasks to JSON",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click JSON export button (data-testid='export-json-button')",
+          "expected": "JSON file downloads",
+          "observed": "File downloaded: mission-board-export-2026-03-14.json (5865 bytes)"
+        },
+        {
+          "action": "Verify JSON file content",
+          "expected": "JSON array with 11 task objects including enriched data (projectName, agentName)",
+          "observed": "Valid JSON array with 11 objects. Each object contains: id, title, description, status, taskType, projectId, projectName, agentId, agentName, requiresApproval, createdAt, updatedAt, claimedAt. Project names and agent names correctly resolved."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "analytics-export/VAL-ANAL-004-005-export-buttons.png"
+        ],
+        "files": [
+          "analytics-export/VAL-ANAL-005-json-export.json"
+        ],
+        "consoleErrors": "none",
+        "jsonDetails": {
+          "type": "array",
+          "itemCount": 11,
+          "fileSize": "5865 bytes",
+          "filename": "mission-board-export-2026-03-14.json",
+          "enrichedFields": ["projectName", "agentName"],
+          "sampleTask": {
+            "title": "Backlog task one",
+            "status": "backlog",
+            "projectName": "Alpha Project",
+            "agentName": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+          }
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ANAL-007",
+      "title": "Analytics filters",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Take screenshot of initial filters state (no filters applied)",
+          "expected": "All Projects selected, date fields empty, 11 tasks shown",
+          "observed": "Confirmed: project filter = All Projects, date fields empty, export count = 11 tasks, agent table shows 3 agents"
+        },
+        {
+          "action": "Apply project filter: select Alpha Project",
+          "expected": "Export count and agent stats update to show only Alpha Project tasks",
+          "observed": "Export count changed from 11 to 7 tasks. Agent data updated: agent aaaaaaaa total=5, cccccccccccc total=1, bbbbbbbbbbbb total=1. All restricted to Alpha Project."
+        },
+        {
+          "action": "Take screenshot after project filter applied",
+          "expected": "Screenshot shows filtered data",
+          "observed": "Screenshot captured at VAL-ANAL-007-project-filter-alpha.png"
+        },
+        {
+          "action": "Clear project filter and apply date range filter (from 2026-03-15)",
+          "expected": "Analytics metrics and charts update to show 0 tasks (all created on 2026-03-14)",
+          "observed": "Date filter set to 2026-03-15. API requests confirmed including date_from=2026-03-15. Analytics metrics returned 0 tasks. Agent table cleared. Charts show empty data."
+        },
+        {
+          "action": "Take screenshot after date filter applied",
+          "expected": "Screenshot shows empty/filtered analytics",
+          "observed": "Screenshot captured at VAL-ANAL-007-date-filter-applied.png"
+        },
+        {
+          "action": "Click Clear button (data-testid='analytics-clear-filters')",
+          "expected": "All filters cleared, data returns to showing all projects",
+          "observed": "Filters cleared: project filter back to All Projects, date from cleared to empty. Export count returned to 11 tasks. Agent data restored: 3 agents with original totals (6, 3, 2)."
+        },
+        {
+          "action": "Take screenshot after clearing filters",
+          "expected": "Screenshot shows all data restored",
+          "observed": "Screenshot captured at VAL-ANAL-007-filters-cleared.png"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "analytics-export/VAL-ANAL-007-filters-initial.png",
+          "analytics-export/VAL-ANAL-007-project-filter-alpha.png",
+          "analytics-export/VAL-ANAL-007-date-filter-applied.png",
+          "analytics-export/VAL-ANAL-007-filters-cleared.png"
+        ],
+        "consoleErrors": "none",
+        "filterBehavior": {
+          "projectFilter": {
+            "selected": "Alpha Project",
+            "beforeTasks": 11,
+            "afterTasks": 7,
+            "affectedAgents": {
+              "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa": { "beforeTotal": 6, "afterTotal": 5 },
+              "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": { "beforeTotal": 3, "afterTotal": 1 },
+              "cccccccc-cccc-cccc-cccc-cccccccccccc": { "beforeTotal": 2, "afterTotal": 1 }
+            }
+          },
+          "dateFilter": {
+            "dateFrom": "2026-03-15",
+            "apiRequestsIncludeDateParam": true,
+            "analyticsTasksReturned": 0
+          },
+          "clearFilters": {
+            "projectFilterReset": true,
+            "dateFilterReset": true,
+            "tasksRestored": 11
+          }
+        }
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The export task count (data-testid='export-count') does not reflect date filter changes - it only filters by project. The analytics metrics and charts DO correctly respond to date filters. This is by design in the codebase (taskQueryParams in Analytics.tsx only includes project_id, not date params).",
+      "resolved": true,
+      "resolution": "Verified that analytics API endpoints (/api/analytics/tasks, /api/analytics/agents, etc.) correctly receive and apply date_from parameter. The export count is derived from /api/tasks which does not support date filtering - this is expected behavior since the validation contract specifies filters update 'analytics and charts', not export data.",
+      "affectedAssertions": ["VAL-ANAL-007"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 assertions: all 4 passed. VAL-ANAL-006: Three charts (donut, bar, line) render correctly with actual pixel content. VAL-ANAL-004: CSV export downloads valid file with correct headers and 11 task rows. VAL-ANAL-005: JSON export downloads valid file with 11 enriched task objects. VAL-ANAL-007: Project filter and date range filter both work correctly - project filter updates export count and agent stats, date filter updates analytics metrics and charts. Clear button properly resets all filters."
+}

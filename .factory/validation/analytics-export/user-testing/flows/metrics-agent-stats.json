@@ -1,0 +1,152 @@
+{
+  "groupId": "metrics-agent-stats",
+  "testedAt": "2026-03-14T12:00:00.000Z",
+  "isolation": {
+    "dashboardUrl": "http://localhost:3201",
+    "apiUrl": "http://localhost:3200",
+    "browserSession": "fee69b4f2709__metrics",
+    "mode": "read-only"
+  },
+  "toolsUsed": ["agent-browser"],
+  "assertions": [
+    {
+      "id": "VAL-ANAL-001",
+      "title": "Agent performance stats",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to http://localhost:3201 and click Analytics button",
+          "expected": "Analytics page displayed with Agent Performance section",
+          "observed": "Analytics page loaded with Agent Performance section visible"
+        },
+        {
+          "action": "Verify agent-stats-table exists with data-testid",
+          "expected": "Table found with agent names, completed counts, in-progress counts, total tasks, avg completion time, success rate columns",
+          "observed": "Table found with columns: Agent, Completed, In Progress, Total, Avg Completion, Success Rate"
+        },
+        {
+          "action": "Verify at least one agent has tasksCompleted > 0",
+          "expected": "At least one agent row shows completed > 0",
+          "observed": "Agent aaaaaaaa has 2 completed, bbbbbbbb has 1 completed, cccccccc has 1 completed"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/analytics-export/metrics-agent-stats/analytics-page-full.png",
+          "evidence/analytics-export/metrics-agent-stats/analytics-page-annotated.png",
+          "evidence/analytics-export/metrics-agent-stats/VAL-ANAL-001-agent-performance.png"
+        ],
+        "consoleErrors": "none",
+        "dataTestIdFound": {
+          "agent-performance-section": true,
+          "agent-stats-table": true
+        },
+        "tableData": {
+          "headers": ["Agent", "Completed", "In Progress", "Total", "Avg Completion", "Success Rate"],
+          "rows": [
+            ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "2", "0", "6", "N/A", "66.7%"],
+            ["bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "1", "1", "3", "N/A", "33.3%"],
+            ["cccccccc-cccc-cccc-cccc-cccccccccccc", "1", "1", "2", "N/A", "50%"]
+          ]
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ANAL-002",
+      "title": "Task completion metrics",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Scroll to Task Completion Metrics section",
+          "expected": "Section visible with metric cards and status distribution",
+          "observed": "Section displayed with Total Tasks (11), Completion Rate (36.4%), Avg Time to Completion (0m)"
+        },
+        {
+          "action": "Verify Total Tasks metric card shows number > 0",
+          "expected": "Total Tasks > 0",
+          "observed": "Total Tasks = 11"
+        },
+        {
+          "action": "Verify Completion Rate metric card shows percentage",
+          "expected": "Completion Rate percentage displayed",
+          "observed": "Completion Rate = 36.4% (4 completed)"
+        },
+        {
+          "action": "Verify Avg Time to Completion metric card exists",
+          "expected": "Avg Time to Completion card with time value",
+          "observed": "Avg Time to Completion = 0m"
+        },
+        {
+          "action": "Verify status distribution shows bars for statuses",
+          "expected": "Status distribution with backlog, ready, in_progress, review, done, blocked",
+          "observed": "All 6 statuses present: Backlog(2/18%), Ready(1/9%), In Progress(2/18%), Review(1/9%), Done(4/36%), Blocked(1/9%)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/analytics-export/metrics-agent-stats/analytics-page-full.png",
+          "evidence/analytics-export/metrics-agent-stats/VAL-ANAL-002-task-metrics.png"
+        ],
+        "consoleErrors": "none",
+        "dataTestIdFound": {
+          "task-metrics-section": true
+        },
+        "metrics": {
+          "totalTasks": 11,
+          "completionRate": "36.4%",
+          "avgTimeToCompletion": "0m",
+          "statusDistribution": {
+            "backlog": { "count": 2, "percentage": "18%" },
+            "ready": { "count": 1, "percentage": "9%" },
+            "inProgress": { "count": 2, "percentage": "18%" },
+            "review": { "count": 1, "percentage": "9%" },
+            "done": { "count": 4, "percentage": "36%" },
+            "blocked": { "count": 1, "percentage": "9%" }
+          }
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ANAL-003",
+      "title": "Time tracking",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Scroll to Time Tracking section",
+          "expected": "Time Tracking section visible with Created → Claimed and Claimed → Completed metrics",
+          "observed": "Time Tracking section displayed with both metrics"
+        },
+        {
+          "action": "Verify Created → Claimed metric card exists with time value",
+          "expected": "Created → Claimed card with time value",
+          "observed": "Created → Claimed = 0m (8 tasks measured)"
+        },
+        {
+          "action": "Verify Claimed → Completed metric card exists with time value",
+          "expected": "Claimed → Completed card with time value",
+          "observed": "Claimed → Completed = 0m (4 tasks measured)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "evidence/analytics-export/metrics-agent-stats/analytics-page-full.png",
+          "evidence/analytics-export/metrics-agent-stats/VAL-ANAL-003-time-tracking.png"
+        ],
+        "consoleErrors": "none",
+        "dataTestIdFound": {
+          "time-tracking-section": true
+        },
+        "metrics": {
+          "createdToClaimed": "0m (8 tasks measured)",
+          "claimedToCompleted": "0m (4 tasks measured)"
+        }
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: all 3 passed. VAL-ANAL-001 confirmed agent performance table with 3 agents showing completed/in-progress/total/avg completion/success rate. VAL-ANAL-002 confirmed task completion metrics with 11 total tasks, 36.4% completion rate, and all 6 status distributions. VAL-ANAL-003 confirmed time tracking with Created→Claimed and Claimed→Completed metrics."
+}

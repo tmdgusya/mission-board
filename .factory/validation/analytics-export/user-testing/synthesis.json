@@ -1,0 +1,51 @@
+{
+  "milestone": "analytics-export",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-ANAL-001",
+    "VAL-ANAL-002",
+    "VAL-ANAL-003",
+    "VAL-ANAL-004",
+    "VAL-ANAL-005",
+    "VAL-ANAL-006",
+    "VAL-ANAL-007"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "flowReports": [
+    ".factory/validation/analytics-export/user-testing/flows/metrics-agent-stats.json",
+    ".factory/validation/analytics-export/user-testing/flows/export-charts-filters.json"
+  ],
+  "appliedUpdates": [],
+  "previousRound": null,
+  "details": {
+    "VAL-ANAL-001": {
+      "summary": "Agent performance stats table displays correctly with 3 agents showing completed (2,1,1), in-progress (0,1,1), total tasks (6,3,2), avg completion time (N/A), and success rate (66.7%, 33.3%, 50%)"
+    },
+    "VAL-ANAL-002": {
+      "summary": "Task completion metrics show Total Tasks=11, Completion Rate=36.4% (4/11), Avg Time to Completion=0m. Status distribution bars display all 6 statuses: backlog(2), ready(1), in_progress(2), review(1), done(4), blocked(1)"
+    },
+    "VAL-ANAL-003": {
+      "summary": "Time tracking section shows Created→Claimed=0m (8 tasks measured) and Claimed→Completed=0m (4 tasks measured). Both metric cards present with correct values."
+    },
+    "VAL-ANAL-004": {
+      "summary": "CSV export button downloads valid CSV file (mission-board-export-2026-03-14.csv, 2273 bytes) with 11 headers (ID,Title,Description,Status,Task Type,Project,Agent,Requires Approval,Created At,Updated At,Claimed At) and 11 task data rows with resolved project/agent names."
+    },
+    "VAL-ANAL-005": {
+      "summary": "JSON export button downloads valid JSON file (mission-board-export-2026-03-14.json, 5865 bytes) with 11 enriched task objects including projectName and agentName fields."
+    },
+    "VAL-ANAL-006": {
+      "summary": "Three charts render correctly: donut chart (240x240) for task status distribution, bar chart (558x280) for agent comparison, and line chart (1175x280) for velocity over time. All have actual drawn pixel content."
+    },
+    "VAL-ANAL-007": {
+      "summary": "Project filter correctly reduces visible tasks from 11 to 7 (Alpha Project) and updates agent stats. Date range filter correctly updates analytics API calls and shows 0 tasks for future date. Clear button resets all filters and restores original data."
+    }
+  }
+}
