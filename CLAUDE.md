@@ -31,6 +31,34 @@ test("hello world", () => {
 });
 ```
 
+### Database isolation in tests
+
+**CRITICAL: Tests MUST NOT touch the production database (`./data/mission-board.db`).**
+
+The production database contains live project and task data. Tests that wipe tables (via `resetDatabase()` or migrations) will destroy real data.
+
+**Rules:**
+
+1. **Always set `DATABASE_PATH` to a test-specific file** when running tests that interact with the database:
+   ```sh
+   DATABASE_PATH=./data/test.db bun test
+   ```
+   Or set it in test setup:
+   ```ts
+   process.env.DATABASE_PATH = "./data/test.db";
+   ```
+
+2. **Never run `resetDatabase()` or destructive migrations against the default database path.** The `src/db/connection.ts` defaults to `./data/mission-board.db` — if `DATABASE_PATH` is not set, tests will wipe production data.
+
+3. **Test files that use `resetDatabase()`** (in `tests/db/reset.ts`) must ensure `DATABASE_PATH` is set to a test DB before importing the connection module.
+
+4. **When spawning agents that run tests**, ensure `DATABASE_PATH` is set in the agent's environment or instructions. Agents working in worktrees share the same `./data/` directory.
+
+5. **Do not restart the production API server** to pick up test schema changes. If you need a server for integration tests, start a separate instance on a different port with a test database:
+   ```sh
+   DATABASE_PATH=./data/test.db PORT=3299 bun run dev:api
+   ```
+
 ## Frontend
 
 Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
