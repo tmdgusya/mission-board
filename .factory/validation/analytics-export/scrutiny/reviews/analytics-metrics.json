@@ -1,0 +1,56 @@
+{
+  "featureId": "analytics-metrics",
+  "reviewedAt": "2026-03-14T11:30:00.000Z",
+  "commitId": "219c54873177ab9d2531d1fd6ab46cbac74ff9ba",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The analytics-metrics feature is well-implemented. The backend provides three analytics API endpoints (/api/analytics/agents, /api/analytics/tasks, /api/analytics/time-tracking) with project filtering. The frontend delivers a comprehensive Analytics page with agent performance stats (completed, in progress, avg completion time, success rate), task completion metrics (total tasks, status distribution, completion rate, avg time to completion), and time tracking (created-to-claimed, claimed-to-completed). Navigation is integrated via a button in the dashboard header. 30 tests were added covering all VAL-ANAL-001, VAL-ANAL-002, VAL-ANAL-003 assertions, and all 261 tests pass. Typecheck is clean. The implementation fulfills all stated requirements.",
+    "issues": [
+      {
+        "file": "src/api/routes/analytics.ts",
+        "line": 30,
+        "severity": "non_blocking",
+        "description": "The N+1 query pattern in the /agents endpoint fetches all agents then queries tasks per agent in parallel. For large numbers of agents, this could be slow. Could be optimized with a single GROUP BY query. Acceptable for current scale but worth noting for future optimization."
+      },
+      {
+        "file": "src/api/routes/analytics.ts",
+        "line": 5,
+        "severity": "non_blocking",
+        "description": "UUID_REGEX is defined but never used in the commit. The project_id filter parameter is passed directly to Drizzle without UUID format validation. Other endpoints (e.g., tasks.ts, agents.ts) may already validate this at the route level, but if not, this is a minor input validation gap."
+      },
+      {
+        "file": "src/api/routes/analytics.ts",
+        "line": 130,
+        "severity": "non_blocking",
+        "description": "The avgTimeToCompletionMs in /tasks endpoint uses created_at to updated_at (full lifecycle), while the agent-level avgCompletionTimeMs uses claimed_at to updated_at (claim-to-done). This inconsistency is not documented but may be intentional (overall task completion vs. agent work time). The frontend displays these with different labels which somewhat mitigates confusion."
+      },
+      {
+        "file": "dashboard/src/pages/Analytics.tsx",
+        "line": 620,
+        "severity": "non_blocking",
+        "description": "Loading/error states are only shown when there's no cached data (agentStats.length === 0 && !taskMetrics). If partial data is cached (e.g., agent stats loaded but task metrics failed), the page renders with missing sections but no error indicator for the failed portion. This is a minor UX issue."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The architecture.md library file does not document the analytics API endpoints (/api/analytics/agents, /api/analytics/tasks, /api/analytics/time-tracking, /api/analytics/velocity). These were added by the analytics-metrics and analytics-charts features but the architecture doc's API Design section was not updated.",
+      "evidence": ".factory/library/architecture.md 'API Design' section ends at /api/approvals endpoints. The analytics endpoints are missing from the documented REST API list."
+    },
+    {
+      "area": "conventions",
+      "observation": "The analytics backend routes use a pattern of loading all records into memory and filtering/processing in JavaScript rather than using SQL aggregation (GROUP BY, AVG, COUNT). This differs from how some other routes work but is consistent with the simpler query patterns used elsewhere in the codebase. For analytics endpoints that could grow large, SQL-level aggregation would be more efficient.",
+      "evidence": "src/api/routes/analytics.ts:30-88 — agents endpoint loads all agents, then queries tasks per agent individually; tasks endpoint loads all tasks then counts in JS. Compare to the pattern in agents.ts or tasks.ts which use Drizzle's where() for filtering."
+    },
+    {
+      "area": "skills",
+      "observation": "The frontend-worker skill says 'Write tests first (RED)' but the worker actually wrote tests after implementation (the transcript shows: create backend routes → create frontend page → write tests → fix failing tests → verify all pass). This is a deviation from TDD but the outcome was the same — comprehensive tests were written and all pass. The skill procedure may need updating to reflect that TDD is aspirational rather than mandatory.",
+      "evidence": "Worker transcript skeleton shows tools in order: Create analytics.ts → Edit api-client.ts → Create use-analytics.ts → Create Analytics.tsx → Edit DashboardContent.tsx → Create Analytics.test.tsx. skillFeedback.followedProcedure is true, suggesting the skill doesn't strictly enforce TDD order."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The analytics-metrics feature (commit 219c548) is a solid implementation that fully satisfies VAL-ANAL-001 (agent performance stats), VAL-ANAL-002 (task completion metrics), and VAL-ANAL-003 (time tracking). It adds 3 backend analytics endpoints with project filtering, a React Analytics page with agent stats table, task metrics cards with status distribution bars, and time tracking metrics. Navigation is integrated into the dashboard header. 30 tests cover rendering, data accuracy, filtering, navigation, and loading/error/empty states. All 261 tests pass and typecheck is clean. No blocking issues found. Four non-blocking observations noted (N+1 query pattern, unused UUID regex, inconsistent time calculation semantics, partial error state handling) and three shared state observations (architecture.md needs analytics endpoint documentation, query pattern convention note, skill TDD procedure gap)."
+}

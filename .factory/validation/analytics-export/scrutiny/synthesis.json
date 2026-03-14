@@ -1,0 +1,120 @@
+{
+  "milestone": "analytics-export",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "bun test && bunx vitest run --config dashboard/vitest.config.ts",
+      "exitCode": 0,
+      "details": "183 backend tests pass (schema: 14, health: 3, projects: 22, tasks: 37, agents: 15, claim/release: 16, logs: 26, approvals: 24, approval-review: 25). 322 dashboard tests pass (9 test files). Total: 505 tests pass."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "bun run typecheck",
+      "exitCode": 0,
+      "details": "tsc --noEmit completed with no errors."
+    },
+    "lint": {
+      "passed": true,
+      "command": "bun run lint",
+      "exitCode": 0,
+      "details": "Lint not configured yet (placeholder). No actual linting performed."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "analytics-metrics",
+      "severity": "non_blocking",
+      "description": "N+1 query pattern in /api/analytics/agents endpoint fetches all agents then queries tasks per agent. Could be optimized with GROUP BY for larger scale."
+    },
+    {
+      "featureId": "analytics-metrics",
+      "severity": "non_blocking",
+      "description": "UUID_REGEX defined but unused in analytics.ts. project_id filter parameter not validated as UUID format."
+    },
+    {
+      "featureId": "analytics-metrics",
+      "severity": "non_blocking",
+      "description": "Inconsistent time calculation semantics: avgTimeToCompletionMs uses created_at→updated_at (full lifecycle) while avgCompletionTimeMs uses claimed_at→updated_at (agent work time). Different labels on frontend somewhat mitigate confusion."
+    },
+    {
+      "featureId": "analytics-metrics",
+      "severity": "non_blocking",
+      "description": "Partial data error states not surfaced — if one analytics query fails while others succeed, no per-section error indicator is shown."
+    },
+    {
+      "featureId": "analytics-charts",
+      "severity": "non_blocking",
+      "description": "DonutChart resize handler calls scheduleRender with a no-op that only clears canvas. Chart flashes blank on resize until data changes trigger re-render."
+    },
+    {
+      "featureId": "analytics-charts",
+      "severity": "non_blocking",
+      "description": "Date filtering inconsistency: /agents, /tasks, /time-tracking use tasks.createdAt, but /velocity uses tasks.updatedAt. Intentional but could confuse users."
+    },
+    {
+      "featureId": "analytics-charts",
+      "severity": "non_blocking",
+      "description": "project_id query parameter on analytics endpoints not validated as UUID format. Invalid UUID returns empty results instead of 400."
+    },
+    {
+      "featureId": "export-functionality",
+      "severity": "non_blocking",
+      "description": "Date range filters not forwarded to export task query. Export only respects project filter. TaskQueryParams interface doesn't support date filtering."
+    },
+    {
+      "featureId": "export-functionality",
+      "severity": "non_blocking",
+      "description": "CSV column count test uses simple split(',') which doesn't handle quoted fields correctly."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added analytics API endpoints (/api/analytics/agents, /tasks, /time-tracking, /velocity) to architecture.md REST API section",
+      "sourceFeature": "analytics-metrics, analytics-charts"
+    },
+    {
+      "target": "library",
+      "description": "Added export date filter gap to known-issues.md — date range filters are not applied to exported task lists",
+      "sourceFeature": "export-functionality"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Update frontend-worker skill step 3: replace 'bun run dev:all' reference with instructions to use services.yaml start commands (separate api and dashboard services). Also clarify TDD procedure — current skill says 'Write tests first (RED)' but workers consistently implement then test.",
+      "evidence": "Both analytics-charts and export-functionality reviewers noted that 'bun run dev:all' is not a defined script. Three reviewers across milestones have noted TDD procedure deviations.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Clarify inline styles vs CSS modules/Tailwind convention. AGENTS.md mentions CSS modules or Tailwind but the established pattern in dashboard components is inline style objects.",
+      "evidence": "analytics-charts reviewer noted all styling in Charts.tsx and Analytics.tsx uses inline style={{}} despite AGENTS.md listing 'CSS modules or Tailwind for styling'. Pre-existing pattern from earlier milestones.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Analytics query pattern uses JS-level aggregation instead of SQL GROUP BY",
+      "reason": "Already-documented pattern. The architecture.md 'Patterns & Conventions' section notes business logic patterns. This is a known performance trade-off accepted across the codebase."
+    },
+    {
+      "observation": "Velocity endpoint defaults to 30 days while other analytics endpoints default to all-time",
+      "reason": "Intentional design decision documented in code. Velocity is inherently time-bounded by nature."
+    },
+    {
+      "observation": "services.yaml already correctly documents api and dashboard services",
+      "reason": "Not an observation requiring action — confirmation that services.yaml is correct."
+    }
+  ],
+  "previousRound": null
+}

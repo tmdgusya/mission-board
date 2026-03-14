@@ -139,6 +139,12 @@ GET    /api/approvals          - List pending approvals
 POST   /api/approvals          - Request approval
 POST   /api/approvals/:id/approve - Approve request
 POST   /api/approvals/:id/deny    - Deny request
+
+Analytics
+GET    /api/analytics/agents      - Agent performance stats (filter by project, date range)
+GET    /api/analytics/tasks       - Task completion metrics (filter by project, date range)
+GET    /api/analytics/time-tracking - Time metrics: created-to-claimed, claimed-to-done (filter by project, date range)
+GET    /api/analytics/velocity    - Task completion velocity over time (defaults to 30 days; filter by project, date range)
 ```
 
 ## Patterns & Conventions

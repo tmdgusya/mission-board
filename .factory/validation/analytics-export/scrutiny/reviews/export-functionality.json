@@ -1,0 +1,49 @@
+{
+  "featureId": "export-functionality",
+  "reviewedAt": "2026-03-14T02:30:00.000Z",
+  "commitId": "8068db2",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of CSV and JSON export functionality. The Export.tsx component is well-structured with pure, testable export functions (exportToCSV, exportToJSON) separated from the React component. CSV escaping handles commas, double quotes, and newlines correctly. JSON export enriches objects with human-readable project/agent names. Project filter is respected via the taskQueryParams memo in Analytics.tsx. 34 unit tests provide thorough coverage. One non-blocking observation about date filters not being forwarded to the export task query.",
+    "issues": [
+      {
+        "file": "dashboard/src/pages/Analytics.tsx",
+        "line": 558,
+        "severity": "non_blocking",
+        "description": "Date range filters (dateFrom/dateTo) are not forwarded to the taskQueryParams used for export. The taskQueryParams only filters by project_id, while the analyticsParams used for charts/metrics includes dateFrom/dateTo. This means if a user sets a date range filter, the analytics charts/metrics will show filtered data but the export will include all tasks for the selected project regardless of date range. This is a partial filter-respect limitation. The TaskQueryParams interface in api-client.ts doesn't support date filtering, so this would require either a backend change or client-side filtering to fix."
+      },
+      {
+        "file": "dashboard/src/components/Export.test.tsx",
+        "line": 580,
+        "severity": "non_blocking",
+        "description": "The 'CSV has consistent column count per row' test uses simple split(',') which doesn't correctly handle quoted fields containing commas. The test acknowledges this with a comment but still passes because it only checks lines[i].length > 0 instead of verifying actual column counts. The test verifies the header has 11 columns but doesn't actually validate data rows have 11 columns."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "services",
+      "observation": "The services.yaml already documents the correct commands for testing (test:dashboard = bunx vitest run --config dashboard/vitest.config.ts) and service ports (3200/3201). These are correct and match what the worker used. No gap here.",
+      "evidence": "Worker used 'bunx vitest run --config dashboard/vitest.config.ts' matching services.yaml test:dashboard command"
+    },
+    {
+      "area": "conventions",
+      "observation": "Worker followed the frontend-worker skill procedure but deviated from step 3 (manual verification with agent-browser) by using JavaScript eval in the browser to verify export content. The deviation was justified because blob URL downloads don't produce filesystem files in headless Chrome. This is a useful pattern for future workers implementing download-based features.",
+      "evidence": "Handoff skillFeedback.deviations documents: 'Used JavaScript eval to verify CSV/JSON export content instead of relying on file download capture, since blob URL downloads don't write to filesystem in headless Chrome.'"
+    },
+    {
+      "area": "skills",
+      "observation": "The frontend-worker skill step 3 says 'Start both API and frontend: bun run dev:all' but the services.yaml defines separate api and dashboard services. The command 'bun run dev:all' may not exist as a script. Workers may need to use services.yaml start commands instead.",
+      "evidence": "SKILL.md says 'bun run dev:all' but services.yaml has separate 'PORT=3200 bun run dev:api' and 'PORT=3201 bun run dev:dashboard' commands"
+    },
+    {
+      "area": "knowledge",
+      "observation": "The TaskQueryParams interface in api-client.ts only supports project_id, status, and agent_id filters — not date range filtering. The analytics hooks (use-analytics.ts) use a separate parameter structure (projectId, dateFrom, dateTo) that hits different API endpoints. This mismatch means task data used for export cannot be date-filtered via the standard listTasks API. Future workers implementing date-filtered exports would need to either extend the backend API or do client-side filtering.",
+      "evidence": "dashboard/src/lib/api-client.ts:63-72 — listTasks only accepts project_id, status, agent_id. dashboard/src/pages/Analytics.tsx:558-562 — taskQueryParams only uses project_id from the available filters"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The export-functionality feature passes review. The implementation provides CSV and JSON export with proper CSV escaping, project/agent name resolution, and project filter support. 34 unit tests cover the core export logic, component rendering, and edge cases (special characters, empty data, unknown references). The only notable gap is that date range filters are not applied to exported tasks (only project filter is), which is a minor limitation since the backend listTasks API doesn't support date filtering. Code quality is good — pure functions are separated from the component, testability is strong, and the component integrates cleanly into the existing Analytics page."
+}

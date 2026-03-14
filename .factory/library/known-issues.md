@@ -11,3 +11,5 @@ These issues are noted for awareness but do not block mission progress.
 - **Toast tests fail under bun test**: 3 Toast component tests (renders toast messages, renders nothing when no messages, can be dismissed manually) fail under `bun test` because `@testing-library/react` requires a DOM. They pass under `bunx vitest run --config dashboard/vitest.config.ts` (25/25 pass). This is expected behavior — dashboard tests must be run with vitest, not bun test.
 
 - **Vitest 4.x + bun:test alias**: Vitest 4.x cannot bundle `bun:test` natively. The vitest config includes a resolve alias mapping `bun:test` to `dashboard/src/__mocks__/bun-test.ts` which re-exports vitest globals. This is needed because some dependencies (e.g., @testing-library/jest-dom) reference `bun:test` in their type declarations.
+
+- **Export date filter gap**: The Analytics page export (CSV/JSON) only applies the project filter to exported tasks. Date range filters are applied to analytics charts/metrics but NOT to the exported task list, because `TaskQueryParams` in `api-client.ts` doesn't support date filtering and the backend `GET /api/tasks` endpoint doesn't accept date range params.
