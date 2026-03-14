@@ -37,7 +37,7 @@ export interface ClaimCommandOptions {
  * @param taskId - The ID of the task to claim
  * @returns Exit code (0 for success, 1 for error)
  */
-export async function executeClaim(taskId: string): Promise<number> {
+export async function executeClaim(taskId: string, agentName?: string): Promise<number> {
   // Validate task ID format (UUID)
   if (!isValidUUID(taskId)) {
     console.error(chalk.red("Error: Invalid task ID format"));
@@ -46,7 +46,7 @@ export async function executeClaim(taskId: string): Promise<number> {
   }
 
   try {
-    const task = await claimTask(taskId);
+    const task = await claimTask(taskId, agentName);
 
     console.log(formatClaimSuccess(task.id));
     console.log(chalk.gray(`  Status: ${task.status}`));

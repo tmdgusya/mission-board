@@ -1,5 +1,17 @@
-import { loadConfig } from "./config";
+import { loadConfig, getAgentId } from "./config";
 import { withTimeout, API_TIMEOUT_MS } from "./errors";
+
+/**
+ * Resolve the agent UUID from config, using the given agent name or the default.
+ */
+async function resolveAgentId(agentName?: string): Promise<{ apiUrl: string; agentId: string }> {
+  const config = await loadConfig();
+  const name = agentName || config.default_agent;
+  if (!name) {
+    throw new Error("No agent specified and no default_agent configured. Run 'mission init' first.");
+  }
+  return { apiUrl: config.api_url, agentId: getAgentId(config, name) };
+}
 
 // Re-export task statuses for validation
 export const TASK_STATUSES = [
@@ -202,16 +214,16 @@ export async function listProjects(): Promise<Project[]> {
  * @returns The updated task
  * @throws Error if the API request fails (including 409 conflict)
  */
-export async function claimTask(taskId: string): Promise<Task> {
-  const config = await loadConfig();
+export async function claimTask(taskId: string, agentName?: string): Promise<Task> {
+  const { apiUrl, agentId } = await resolveAgentId(agentName);
 
   const response = await withTimeout(
-    fetch(`${config.api_url}/api/tasks/${taskId}/claim`, {
+    fetch(`${apiUrl}/api/tasks/${taskId}/claim`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ agentId: config.agent_id }),
+      body: JSON.stringify({ agentId }),
     }),
     API_TIMEOUT_MS
   );
@@ -423,18 +435,18 @@ export async function getProject(projectId: string): Promise<Project> {
  * @returns The created approval request
  * @throws Error if the API request fails
  */
-export async function requestApproval(taskId: string, actionRequested: string): Promise<ApprovalRequest> {
-  const config = await loadConfig();
+export async function requestApproval(taskId: string, actionRequested: string, agentName?: string): Promise<ApprovalRequest> {
+  const { apiUrl, agentId } = await resolveAgentId(agentName);
 
   const response = await withTimeout(
-    fetch(`${config.api_url}/api/approvals`, {
+    fetch(`${apiUrl}/api/approvals`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         taskId,
-        agentId: config.agent_id,
+        agentId,
         actionRequested,
       }),
     }),

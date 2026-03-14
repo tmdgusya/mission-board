@@ -1,130 +1,377 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdir, rm, readFile, access } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
 
-// Module under test (will be imported after we create it)
-const CONFIG_DIR = join(homedir(), ".mission-board");
-const CONFIG_FILE = join(CONFIG_DIR, "config.json");
-
-describe("CLI Config", () => {
-  // Store original home for restoration
+describe("CLI Config (multi-agent)", () => {
   const originalHome = process.env.HOME;
   const testHome = join(process.cwd(), "test-home");
   const testConfigDir = join(testHome, ".mission-board");
   const testConfigFile = join(testConfigDir, "config.json");
 
   beforeEach(async () => {
-    // Set up test home directory
     process.env.HOME = testHome;
-    process.env.USERPROFILE = testHome; // Windows
-    
-    // Clean up any existing test home
+    process.env.USERPROFILE = testHome;
+
     try {
       await rm(testHome, { recursive: true, force: true });
     } catch {
-      // Ignore if doesn't exist
+      // Ignore
     }
-    
-    // Create test home directory
     await mkdir(testHome, { recursive: true });
   });
 
   afterEach(async () => {
-    // Restore original home
     process.env.HOME = originalHome;
     delete process.env.USERPROFILE;
-    
-    // Clean up test home
+
     try {
       await rm(testHome, { recursive: true, force: true });
     } catch {
-      // Ignore if doesn't exist
+      // Ignore
     }
   });
 
-  describe("Config file handling", () => {
+  describe("New config format load/save", () => {
     test("should create config directory if it doesn't exist", async () => {
-      // Import the config module dynamically to get fresh state
-      const { getConfigPath, ensureConfigDir } = await import("../src/config");
-      
+      const { ensureConfigDir } = await import("../src/config");
+
       await ensureConfigDir();
-      
-      // Verify directory was created (access returns undefined on success, but Bun's expect needs explicit handling)
-      const result = await access(testConfigDir).then(() => "exists").catch(() => "not-found");
+
+      const result = await access(testConfigDir)
+        .then(() => "exists")
+        .catch(() => "not-found");
       expect(result).toBe("exists");
     });
 
     test("should return correct config file path", async () => {
       const { getConfigPath } = await import("../src/config");
-      
-      const configPath = getConfigPath();
-      expect(configPath).toBe(testConfigFile);
+      expect(getConfigPath()).toBe(testConfigFile);
     });
 
-    test("should create default config if file doesn't exist", async () => {
+    test("should create default config with agents map when no config exists", async () => {
       const { loadConfig } = await import("../src/config");
-      
+
       const config = await loadConfig();
-      
-      // Verify config was created with default values
-      expect(config).toHaveProperty("agent_id");
+
       expect(config).toHaveProperty("api_url");
+      expect(config).toHaveProperty("agents");
+      expect(config).toHaveProperty("default_agent");
       expect(config.api_url).toBe("http://localhost:3200");
-      expect(typeof config.agent_id).toBe("string");
-      expect(config.agent_id.length).toBeGreaterThan(0);
+      expect(typeof config.agents).toBe("object");
+      expect(Object.keys(config.agents).length).toBe(1);
+      // default agent name should be set
+      expect(config.default_agent).toBeTruthy();
+      // the default agent should exist in the agents map
+      expect(config.agents[config.default_agent]).toBeTruthy();
     });
 
-    test("should load existing config if file exists", async () => {
-      // Create config file manually first
+    test("should load existing new-format config", async () => {
       await mkdir(testConfigDir, { recursive: true });
       const existingConfig = {
-        agent_id: "test-agent-123",
-        api_url: "http://custom:8080"
+        api_url: "http://custom:8080",
+        agents: { alice: "550e8400-e29b-41d4-a716-446655440000" },
+        default_agent: "alice",
       };
       await Bun.write(testConfigFile, JSON.stringify(existingConfig, null, 2));
-      
+
       const { loadConfig } = await import("../src/config");
       const config = await loadConfig();
-      
-      expect(config.agent_id).toBe("test-agent-123");
+
       expect(config.api_url).toBe("http://custom:8080");
+      expect(config.agents.alice).toBe("550e8400-e29b-41d4-a716-446655440000");
+      expect(config.default_agent).toBe("alice");
     });
 
-    test("should save config correctly", async () => {
-      const { saveConfig, loadConfig } = await import("../src/config");
-      
+    test("should save config correctly in new format", async () => {
+      const { saveConfig } = await import("../src/config");
+
       const newConfig = {
-        agent_id: "my-agent",
-        api_url: "http://example.com:3200"
+        api_url: "http://example.com:3200",
+        agents: { bob: "6ba7b810-9dad-11d1-80b4-00c04fd430c8" },
+        default_agent: "bob",
       };
-      
+
       await saveConfig(newConfig);
-      
-      // Read file directly to verify
+
       const content = await readFile(testConfigFile, "utf-8");
       const parsed = JSON.parse(content);
-      
-      expect(parsed.agent_id).toBe("my-agent");
+
       expect(parsed.api_url).toBe("http://example.com:3200");
+      expect(parsed.agents.bob).toBe("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+      expect(parsed.default_agent).toBe("bob");
+    });
+  });
+
+  describe("Old format auto-migration", () => {
+    test("should migrate old format (agent_id) to new multi-agent format", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const oldConfig = {
+        agent_id: "550e8400-e29b-41d4-a716-446655440000",
+        api_url: "http://localhost:3200",
+      };
+      await Bun.write(testConfigFile, JSON.stringify(oldConfig, null, 2));
+
+      const { loadConfig } = await import("../src/config");
+      const config = await loadConfig();
+
+      // Should have new format
+      expect(config.agents).toBeDefined();
+      expect(config.default_agent).toBeDefined();
+      // Old agent_id should NOT be present as a top-level key
+      expect((config as Record<string, unknown>).agent_id).toBeUndefined();
+
+      // Agent name should be derived from first 8 chars of UUID
+      const expectedName = "agent-550e8400";
+      expect(config.agents[expectedName]).toBe("550e8400-e29b-41d4-a716-446655440000");
+      expect(config.default_agent).toBe(expectedName);
+    });
+
+    test("should persist migrated config to disk", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const oldConfig = {
+        agent_id: "abcdef01-0000-0000-0000-000000000000",
+        api_url: "http://myserver:9000",
+      };
+      await Bun.write(testConfigFile, JSON.stringify(oldConfig, null, 2));
+
+      const { loadConfig } = await import("../src/config");
+      await loadConfig();
+
+      // Re-read from disk directly
+      const content = await readFile(testConfigFile, "utf-8");
+      const parsed = JSON.parse(content);
+
+      expect(parsed.agents).toBeDefined();
+      expect(parsed.agent_id).toBeUndefined();
+      expect(parsed.default_agent).toBe("agent-abcdef01");
+      expect(parsed.agents["agent-abcdef01"]).toBe(
+        "abcdef01-0000-0000-0000-000000000000"
+      );
+      expect(parsed.api_url).toBe("http://myserver:9000");
+    });
+  });
+
+  describe("Atomic write", () => {
+    test("should write atomically via temp file", async () => {
+      const { saveConfig } = await import("../src/config");
+
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: { test: "00000000-0000-0000-0000-000000000001" },
+        default_agent: "test",
+      };
+
+      await saveConfig(config);
+
+      // File should exist and be valid JSON
+      const content = await readFile(testConfigFile, "utf-8");
+      const parsed = JSON.parse(content);
+      expect(parsed.default_agent).toBe("test");
+
+      // No temp files should remain
+      const { readdir } = await import("node:fs/promises");
+      const files = await readdir(testConfigDir);
+      const tmpFiles = files.filter((f: string) => f.includes(".tmp."));
+      expect(tmpFiles.length).toBe(0);
+    });
+  });
+
+  describe("getAgentId resolution", () => {
+    test("should resolve agent name to UUID", async () => {
+      const { getAgentId } = await import("../src/config");
+
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: {
+          alice: "550e8400-e29b-41d4-a716-446655440000",
+          bob: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        },
+        default_agent: "alice",
+      };
+
+      expect(getAgentId(config, "alice")).toBe(
+        "550e8400-e29b-41d4-a716-446655440000"
+      );
+      expect(getAgentId(config, "bob")).toBe(
+        "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+      );
+    });
+
+    test("should throw for unknown agent name", async () => {
+      const { getAgentId } = await import("../src/config");
+
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: { alice: "550e8400-e29b-41d4-a716-446655440000" },
+        default_agent: "alice",
+      };
+
+      expect(() => getAgentId(config, "unknown")).toThrow(
+        /Unknown agent "unknown"/
+      );
+    });
+
+    test("should list known agents in error message", async () => {
+      const { getAgentId } = await import("../src/config");
+
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: {
+          alice: "aaa",
+          bob: "bbb",
+        },
+        default_agent: "alice",
+      };
+
+      expect(() => getAgentId(config, "charlie")).toThrow(/alice, bob/);
+    });
+
+    test("should throw with (none) for empty agents map", async () => {
+      const { getAgentId } = await import("../src/config");
+
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: {},
+        default_agent: "",
+      };
+
+      expect(() => getAgentId(config, "anyone")).toThrow(/\(none\)/);
+    });
+  });
+
+  describe("registerAgent", () => {
+    test("should register a new agent and save", async () => {
+      // First create a config so loadConfig doesn't auto-generate
+      await mkdir(testConfigDir, { recursive: true });
+      const initialConfig = {
+        api_url: "http://localhost:3200",
+        agents: {},
+        default_agent: "",
+      };
+      await Bun.write(
+        testConfigFile,
+        JSON.stringify(initialConfig, null, 2)
+      );
+
+      const { registerAgent, loadConfig } = await import("../src/config");
+
+      const uuid = await registerAgent("charlie");
+
+      // Should return a UUID
+      expect(uuid).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      );
+
+      // Should be persisted
+      const config = await loadConfig();
+      expect(config.agents.charlie).toBe(uuid);
+      // Should set default_agent when empty
+      expect(config.default_agent).toBe("charlie");
+    });
+
+    test("should return existing UUID if agent already registered", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const existingUuid = "11111111-2222-3333-4444-555555555555";
+      const initialConfig = {
+        api_url: "http://localhost:3200",
+        agents: { alice: existingUuid },
+        default_agent: "alice",
+      };
+      await Bun.write(
+        testConfigFile,
+        JSON.stringify(initialConfig, null, 2)
+      );
+
+      const { registerAgent } = await import("../src/config");
+
+      const uuid = await registerAgent("alice");
+      expect(uuid).toBe(existingUuid);
+    });
+
+    test("should not override default_agent if already set", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const initialConfig = {
+        api_url: "http://localhost:3200",
+        agents: { alice: "11111111-2222-3333-4444-555555555555" },
+        default_agent: "alice",
+      };
+      await Bun.write(
+        testConfigFile,
+        JSON.stringify(initialConfig, null, 2)
+      );
+
+      const { registerAgent, loadConfig } = await import("../src/config");
+
+      await registerAgent("bob");
+
+      const config = await loadConfig();
+      // default_agent should still be alice
+      expect(config.default_agent).toBe("alice");
+    });
+  });
+
+  describe("Edge cases", () => {
+    test("should handle config with missing default_agent", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const config = {
+        api_url: "http://localhost:3200",
+        agents: { alice: "aaa" },
+        // no default_agent
+      };
+      await Bun.write(testConfigFile, JSON.stringify(config, null, 2));
+
+      const { loadConfig } = await import("../src/config");
+      const loaded = await loadConfig();
+
+      expect(loaded.default_agent).toBe("");
+    });
+
+    test("should handle config with missing agents", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const config = {
+        api_url: "http://localhost:3200",
+        default_agent: "test",
+        // no agents field
+      };
+      await Bun.write(testConfigFile, JSON.stringify(config, null, 2));
+
+      const { loadConfig } = await import("../src/config");
+      const loaded = await loadConfig();
+
+      expect(loaded.agents).toEqual({});
+    });
+
+    test("should handle config with missing api_url", async () => {
+      await mkdir(testConfigDir, { recursive: true });
+      const config = {
+        agents: { alice: "aaa" },
+        default_agent: "alice",
+        // no api_url
+      };
+      await Bun.write(testConfigFile, JSON.stringify(config, null, 2));
+
+      const { loadConfig } = await import("../src/config");
+      const loaded = await loadConfig();
+
+      expect(loaded.api_url).toBe("http://localhost:3200");
     });
   });
 
   describe("Agent ID validation", () => {
-    test("should validate agent_id format", async () => {
+    test("should validate agent name format", async () => {
       const { validateAgentId } = await import("../src/config");
-      
-      // Valid agent IDs
+
+      // Valid names
       expect(validateAgentId("agent-123")).toBe(true);
       expect(validateAgentId("my_agent")).toBe(true);
       expect(validateAgentId("agent.name")).toBe(true);
       expect(validateAgentId("Agent-123_test")).toBe(true);
-      
-      // Invalid agent IDs
+
+      // Invalid names
       expect(validateAgentId("")).toBe(false);
       expect(validateAgentId("   ")).toBe(false);
-      expect(validateAgentId("agent@123")).toBe(false); // special chars
-      expect(validateAgentId("agent 123")).toBe(false); // space
+      expect(validateAgentId("agent@123")).toBe(false);
+      expect(validateAgentId("agent 123")).toBe(false);
     });
   });
 });
